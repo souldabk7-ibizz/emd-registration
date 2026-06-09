@@ -97,7 +97,6 @@
 
   const COUNTRIES = ['Thailand','Myanmar','Cambodia','Vietnam','Malaysia','Indonesia','Singapore','Philippines','Other'];
   const SOURCES = ['EMD Email Newsletter','Industry Association','Colleague / Word of Mouth','LinkedIn','Google Search','Other'];
-  const DIETARY = ['No special requirements','Vegetarian','Vegan','Halal','Gluten-free'];
 
   /* ── Logo ── */
   function Logo({ light }) {
@@ -291,19 +290,12 @@
             );
           })}
         </div>
-        <div className="g-half" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-          <Field label="How did you hear about this event?">
-            <select value={d.source||''} onChange={e=>set({...d,source:e.target.value})} style={inp()}>
-              <option value="">Select one…</option>
-              {SOURCES.map(s=><option key={s}>{s}</option>)}
-            </select>
-          </Field>
-          <Field label="Dietary Requirements">
-            <select value={d.dietary||''} onChange={e=>set({...d,dietary:e.target.value})} style={inp()}>
-              {DIETARY.map(x=><option key={x}>{x}</option>)}
-            </select>
-          </Field>
-        </div>
+        <Field label="How did you hear about this event?">
+          <select value={d.source||''} onChange={e=>set({...d,source:e.target.value})} style={inp()}>
+            <option value="">Select one…</option>
+            {SOURCES.map(s=><option key={s}>{s}</option>)}
+          </select>
+        </Field>
       </div>
     );
   }
@@ -385,7 +377,7 @@
   const INIT = {
     prefix:'Mr.', firstName:'', lastName:'', title:'',
     email:'', phone:'', company:'', country:'Thailand',
-    biz:'', interests:[], source:'', dietary:'No special requirements'
+    biz:'', interests:[], source:''
   };
 
   function App() {

@@ -138,7 +138,6 @@
       'Industry':          BIZ_MAP[p.businessType]?.label || p.businessType,
       'Interests':         (p.interests || []).map(id => PROD_MAP[id] || id).join(', '),
       'Source':            p.source || '',
-      'Dietary':           p.dietary || '',
       'Registration Date': new Date(p.registrationDate).toLocaleString('en-GB'),
       'Status':            p.status,
     }));
@@ -147,7 +146,7 @@
     ws['!cols'] = [
       {wch:14},{wch:8},{wch:14},{wch:14},{wch:22},
       {wch:28},{wch:16},{wch:26},{wch:12},
-      {wch:26},{wch:38},{wch:26},{wch:20},{wch:20},{wch:12},
+      {wch:26},{wch:38},{wch:26},{wch:20},{wch:12},
     ];
 
     const wb = XLSX.utils.book_new();

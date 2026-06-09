@@ -209,7 +209,7 @@
     const area=`${line} L${pts.at(-1).x},${pd.t+ih} L${pts[0].x},${pd.t+ih}Z`;
     const base=new Date(); const xTicks=[];
     for (let i=29;i>=0;i-=7) { const d=new Date(base.getTime()-i*86400000); xTicks.push({i:29-i, label:`${d.getMonth()+1}/${d.getDate()}`}); }
-    const yTicks=[Math.round(max*.5), max];
+    const yTicks=[0, Math.round(max*.5), max];
     return (
       <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
         {[.25,.5,.75,1].map(f=><line key={f} x1={pd.l} y1={pd.t+ih-f*ih} x2={pd.l+iw} y2={pd.t+ih-f*ih} stroke={C.border} strokeWidth="1"/>)}
@@ -217,7 +217,7 @@
         <path d={line} fill="none" stroke={C.orange} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
         {pts.filter((_,i)=>i%5===0||i===pts.length-1).map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="3.5" fill={C.orange}/>)}
         {xTicks.map(({i,label})=><text key={i} x={pd.l+(i/(data.length-1))*iw} y={h-4} textAnchor="middle" fontSize="10" fill="#94A3B8" fontFamily="Plus Jakarta Sans">{label}</text>)}
-        {yTicks.map(v=><text key={v} x={pd.l-4} y={pd.t+ih-(v/max)*ih+4} textAnchor="end" fontSize="10" fill="#94A3B8" fontFamily="Plus Jakarta Sans">{v}</text>)}
+        {yTicks.map(v=><text key={v} x={pd.l-4} y={Math.max(pd.t+10, pd.t+ih-(v/max)*ih+4)} textAnchor="end" fontSize="10" fill="#94A3B8" fontFamily="Plus Jakarta Sans">{v}</text>)}
       </svg>
     );
   }

@@ -26,8 +26,8 @@
     .fade-up { animation: fadeUp 0.3s ease forwards; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Dashboard Responsive ── */
-    @media (max-width: 900px) {
+    /* ── Dashboard Responsive — iPad (601–900px): horizontal top nav ── */
+    @media (min-width: 601px) and (max-width: 900px) {
       body { overflow: auto !important; height: auto !important; }
       .dash-app { flex-direction: column !important; height: auto !important; min-height: 100vh !important; }
       .dash-sidebar { width: 100% !important; height: auto !important; flex-direction: row !important; align-items: center !important; padding: 0 6px !important; }
@@ -47,9 +47,32 @@
       .dash-filters > * { min-width: calc(50% - 5px) !important; flex: 1 1 calc(50% - 5px) !important; }
       .dash-table-wrap { overflow-x: auto !important; }
     }
-    @media (max-width: 480px) {
-      .dash-stats > * { min-width: 100% !important; flex: 1 1 100% !important; }
+
+    /* ── Dashboard Responsive — iPhone (≤600px): bottom tab bar ── */
+    .dash-bottom-nav { display: none; }
+    @media (max-width: 600px) {
+      body { overflow: auto !important; height: auto !important; }
+      .dash-app { flex-direction: column !important; height: auto !important; min-height: 100vh !important; }
+      .dash-sidebar { display: none !important; }
+      .dash-bottom-nav {
+        display: flex !important;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: #0D2818;
+        border-top: 1px solid rgba(255,255,255,.12);
+        z-index: 200;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      .dash-main { min-height: 0; overflow: visible !important; }
+      .dash-topbar { padding: 0 12px !important; height: 46px !important; }
+      .dash-topbar-date { display: none !important; }
+      .dash-content { padding: 12px 10px 80px 10px !important; }
+      .dash-stats { flex-wrap: wrap !important; }
+      .dash-stats > * { min-width: calc(50% - 8px) !important; flex: 1 1 calc(50% - 8px) !important; }
+      .dash-charts { grid-template-columns: 1fr !important; }
+      .dash-analytics { grid-template-columns: 1fr !important; }
+      .dash-filters { flex-wrap: wrap !important; }
       .dash-filters > * { min-width: 100% !important; flex: 1 1 100% !important; }
+      .dash-table-wrap { overflow-x: auto !important; }
       .dash-topbar-export span { display: none; }
     }
   </style>
@@ -257,6 +280,40 @@
           </a>
         </div>
       </aside>
+    );
+  }
+
+  /* ─────────────────── Bottom Nav (iPhone) ─────────────────── */
+  function BottomNav({ active, onSelect }) {
+    return (
+      <div className="dash-bottom-nav">
+        {NAV.map(n => {
+          if (n.href) {
+            return (
+              <a key={n.id} href={n.href} style={{
+                flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+                padding:'10px 4px 8px', gap:3, color:'white', textDecoration:'none',
+                background:'rgba(0,132,61,.22)', borderTop:`2px solid ${C.orange}`,
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill={C.orange}><path d={n.icon}/></svg>
+                <span style={{ fontSize:10, fontWeight:700, color:C.orange }}>{n.label}</span>
+              </a>
+            );
+          }
+          const on = active === n.id;
+          return (
+            <button key={n.id} onClick={() => onSelect(n.id)} style={{
+              flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+              padding:'10px 4px 8px', gap:3, background:'none', border:'none', cursor:'pointer',
+              borderTop:`2px solid ${on ? C.orange : 'transparent'}`,
+              transition:'all .15s',
+            }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill={on ? C.orange : 'rgba(255,255,255,.4)'}><path d={n.icon}/></svg>
+              <span style={{ fontSize:10, fontWeight: on ? 700 : 400, color: on ? '#4ADE80' : 'rgba(255,255,255,.45)' }}>{n.label}</span>
+            </button>
+          );
+        })}
+      </div>
     );
   }
 
@@ -770,6 +827,7 @@
             {tab === 'analytics'    && <AnalyticsTab all={all} />}
           </div>
         </div>
+        <BottomNav active={tab} onSelect={setTab} />
       </div>
     );
   }

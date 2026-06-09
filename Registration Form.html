@@ -27,6 +27,27 @@
     button { cursor: pointer; font-family: inherit; }
     @keyframes fadeSlide { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
     .step-enter { animation: fadeSlide 0.25s ease forwards; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .rform-header { padding: 10px 16px !important; }
+      .rform-hero   { padding: 14px 16px !important; }
+      .rform-hero h1 { font-size: 18px !important; }
+      .rform-hero p  { font-size: 12px !important; }
+      .rform-main   { padding: 16px 10px 48px !important; }
+      .rform-card   { padding: 22px 16px !important; border-radius: 12px !important; }
+      .g-name { grid-template-columns: 1fr 1fr !important; }
+      .g-name > *:first-child { grid-column: 1 / -1 !important; }
+      .g-half { grid-template-columns: 1fr !important; }
+      .g-co   { grid-template-columns: 1fr !important; }
+      .g-biz  { grid-template-columns: repeat(2, 1fr) !important; }
+      .step-label { display: none; }
+    }
+    @media (min-width: 601px) and (max-width: 900px) {
+      .rform-card { padding: 28px !important; }
+      .rform-main { padding: 24px 16px 50px !important; }
+      .rform-hero { padding: 18px 24px !important; }
+    }
   </style>
 </head>
 <body>
@@ -167,7 +188,7 @@
           <h2 style={{ fontSize:22, fontWeight:700, color:C.navy }}>Contact Information</h2>
           <p style={{ fontSize:13, color:C.muted, marginTop:4 }}>Please provide your personal details</p>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'100px 1fr 1fr', gap:12 }}>
+        <div className="g-name" style={{ display:'grid', gridTemplateColumns:'100px 1fr 1fr', gap:12 }}>
           <Field label="Prefix">
             <select value={d.prefix} onChange={u('prefix')} style={inp()}>
               {['Mr.','Ms.','Dr.','Eng.'].map(v=><option key={v}>{v}</option>)}
@@ -183,7 +204,7 @@
         <Field label="Job Title / Position" required error={err.title}>
           <input value={d.title} onChange={u('title')} placeholder="e.g. Maintenance Engineer, Plant Manager" style={inp(err.title)} />
         </Field>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+        <div className="g-half" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
           <Field label="Email Address" required error={err.email}>
             <input type="email" value={d.email} onChange={u('email')} placeholder="name@company.co.th" style={inp(err.email)} />
           </Field>
@@ -203,7 +224,7 @@
           <h2 style={{ fontSize:22, fontWeight:700, color:C.navy }}>Organization Details</h2>
           <p style={{ fontSize:13, color:C.muted, marginTop:4 }}>Tell us about your company</p>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 160px', gap:12 }}>
+        <div className="g-co" style={{ display:'grid', gridTemplateColumns:'1fr 160px', gap:12 }}>
           <Field label="Company / Organization" required error={err.company}>
             <input value={d.company} onChange={e=>set({...d,company:e.target.value})} placeholder="Company name" style={inp(err.company)} />
           </Field>
@@ -217,7 +238,7 @@
           <label style={{ fontSize:13, fontWeight:600, color:C.navy, display:'block', marginBottom:8 }}>
             Business Industry <span style={{ color:C.orange }}>*</span>
           </label>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
+          <div className="g-biz" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
             {BIZ_TYPES.map(b => {
               const sel = d.biz === b.id;
               return (
@@ -270,7 +291,7 @@
             );
           })}
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+        <div className="g-half" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
           <Field label="How did you hear about this event?">
             <select value={d.source||''} onChange={e=>set({...d,source:e.target.value})} style={inp()}>
               <option value="">Select one…</option>
@@ -413,9 +434,9 @@
 
     if (submitted) return (
       <div style={baseWrap}>
-        <header style={header}><Logo /></header>
-        <main style={{ display:'flex', justifyContent:'center', padding:'40px 20px 60px' }}>
-          <div style={{ background:C.white, borderRadius:16, maxWidth:540, width:'100%', padding:'40px', boxShadow:'0 4px 32px rgba(11,37,69,.09)' }}>
+        <header style={header} className="rform-header"><Logo /></header>
+        <main className="rform-main" style={{ display:'flex', justifyContent:'center', padding:'40px 20px 60px' }}>
+          <div className="rform-card" style={{ background:C.white, borderRadius:16, maxWidth:540, width:'100%', padding:'40px', boxShadow:'0 4px 32px rgba(11,37,69,.09)' }}>
             <Success d={d} regId={regId} />
           </div>
         </main>
@@ -425,7 +446,7 @@
     return (
       <div style={baseWrap}>
         {/* Header */}
-        <header style={header}>
+        <header style={header} className="rform-header">
           <Logo />
           <div style={{ color:C.navy, textAlign:'right' }}>
             <div style={{ fontSize:13, fontWeight:700 }}>EMD Technology Showcase 2026</div>
@@ -434,7 +455,7 @@
         </header>
 
         {/* Hero band */}
-        <div style={{ background:`linear-gradient(120deg, ${C.navy} 0%, ${C.navyMid} 55%, #1e7040 100%)`, padding:'20px 32px', position:'relative', overflow:'hidden' }}>
+        <div className="rform-hero" style={{ background:`linear-gradient(120deg, ${C.navy} 0%, ${C.navyMid} 55%, #1e7040 100%)`, padding:'20px 32px', position:'relative', overflow:'hidden' }}>
           <div style={{ position:'absolute', right:-40, top:-40, width:200, height:200, borderRadius:'50%', background:C.orange, opacity:.08 }} />
           <div style={{ position:'absolute', right:60, bottom:-60, width:140, height:140, borderRadius:'50%', background:C.orange, opacity:.06 }} />
           <div style={{ maxWidth:600, margin:'0 auto', color:'white', position:'relative' }}>
@@ -444,8 +465,8 @@
         </div>
 
         {/* Form */}
-        <main style={{ display:'flex', justifyContent:'center', padding:'32px 20px 60px' }}>
-          <div style={{ background:C.white, borderRadius:16, maxWidth:600, width:'100%', padding:'36px', boxShadow:'0 4px 32px rgba(11,37,69,.08)' }}>
+        <main className="rform-main" style={{ display:'flex', justifyContent:'center', padding:'32px 20px 60px' }}>
+          <div className="rform-card" style={{ background:C.white, borderRadius:16, maxWidth:600, width:'100%', padding:'36px', boxShadow:'0 4px 32px rgba(11,37,69,.08)' }}>
             <StepBar current={step} />
             <div className="step-enter" key={step}>
               {step === 1 && <Step1 d={d} set={setD} err={err} />}

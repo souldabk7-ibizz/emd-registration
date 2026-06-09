@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Participant Dashboard — EMD Technology Showcase 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #EEF2F7; color: #0B2545; overflow: hidden; height: 100vh; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+    select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%230B2545' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; cursor: pointer; font-family: inherit; }
+    input, select { font-family: inherit; }
+    input:focus, select:focus { outline: 2px solid #F47920; outline-offset:-1px; }
+    @keyframes barGrow { from { width: 0 } }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+    .fade-up { animation: fadeUp 0.3s ease forwards; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#00843D"/>
+    <rect x="20" y="20" width="18" height="60" rx="2" fill="white" opacity="0.9"/>
+    <rect x="42" y="35" width="18" height="45" rx="2" fill="white" opacity="0.7"/>
+    <rect x="64" y="28" width="18" height="52" rx="2" fill="white" opacity="0.5"/>
+  </svg>
+</template>
+<div id="root"></div>
+<script type="text/babel">
+  const { useState, useEffect, useMemo, useRef } = React;
+  const db = firebase.firestore();
+
+  const C = {
+    navy: '#0D2818', navyMid: '#1A5C30', navyLight: '#236b3d',
+    orange: '#00843D', orangeBg: '#E6F5EC',
+    bg: '#EFF5F1', white: '#FFFFFF',
+    border: '#C4DBC9', muted: '#5C7061',
+    success: '#059669', successBg: '#ECFDF5',
+    danger: '#DC2626', dangerBg: '#FEF2F2',
+    gray50: '#F6FAF7', gray100: '#EBF2ED',
+    grayAccent: '#939598',
+  };
+
+  const BIZ_MAP = {
+    petrochemical: { label:'Petrochemical, Oil & Gas', color:'#00843D' },
+    power:         { label:'Power Plant',               color:'#1565C0' },
+    mining:        { label:'Mining',                    color:'#D97706' },
+    food:          { label:'Food & Beverage',           color:'#10B981' },
+    electronics:   { label:'Electronics & Clean Room',  color:'#8B5CF6' },
+    government:    { label:'Government',                color:'#0EA5E9' },
+    cement:        { label:'Cement',                    color:'#939598' },
+    pulp:          { label:'Pulp & Paper',              color:'#6366F1' },
+    other:         { label:'Other',                     color:'#CBD5E1' },
+  };
+
+  const PROD_MAP = {
+    motors:     'Electric Motors',
+    drives:     'Variable Speed Drives',
+    mechanical: 'Mechanical & Fans',
+    filters:    'Industrial Filters',
+    fiber:      'Fiber Optic Sensing',
+  };
+
+
+  /* ─────────────────── Export ─────────────────── */
+  function exportToExcel(participants) {
+    const rows = participants.map(p => ({
+      'Registration ID':   p.id,
+      'Prefix':            p.prefix || '',
+      'First Name':        p.firstName,
+      'Last Name':         p.lastName,
+      'Job Title':         p.title || '',
+      'Email':             p.email || '',
+      'Phone':             p.phone || '',
+      'Company':           p.company,
+      'Country':           p.country,
+      'Industry':          BIZ_MAP[p.businessType]?.label || p.businessType,
+      'Interests':         (p.interests || []).map(id => PROD_MAP[id] || id).join(', '),
+      'Source':            p.source || '',
+      'Dietary':           p.dietary || '',
+      'Registration Date': new Date(p.registrationDate).toLocaleString('en-GB'),
+      'Status':            p.status,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [
+      {wch:14},{wch:8},{wch:14},{wch:14},{wch:22},
+      {wch:28},{wch:16},{wch:26},{wch:12},
+      {wch:26},{wch:38},{wch:26},{wch:20},{wch:20},{wch:12},
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Participants');
+
+    const date = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `EMD_Registrations_${date}.xlsx`);
+  }
+
+  /* ─────────────────── Charts ─────────────────── */
+  function DonutChart({ data, size=200 }) {
+    const total = data.reduce((s,d)=>s+d.value,0);
+    const cx=size/2, cy=size/2, R=size*.42, r=size*.26;
+    const p2c=(ang,rad)=>({ x:cx+rad*Math.cos((ang-90)*Math.PI/180), y:cy+rad*Math.sin((ang-90)*Math.PI/180) });
+    const segs=[]; let a=0;
+    for (const d of data) {
+      const span=(d.value/total)*360; const s=a, e=a+span;
+      const o1=p2c(s,R),o2=p2c(e,R),i1=p2c(e,r),i2=p2c(s,r),lg=span>180?1:0;
+      segs.push({ ...d, path:`M${o1.x} ${o1.y} A${R} ${R} 0 ${lg} 1 ${o2.x} ${o2.y} L${i1.x} ${i1.y} A${r} ${r} 0 ${lg} 0 ${i2.x} ${i2.y}Z` });
+      a+=span;
+    }
+    return (
+      <svg width={size} height={size}>
+        {segs.map((s,i)=><path key={i} d={s.path} fill={s.color} stroke="white" strokeWidth="2.5"/>)}
+        <text x={cx} y={cy-6} textAnchor="middle" fontSize="26" fontWeight="800" fill={C.navy} fontFamily="Plus Jakarta Sans">{total}</text>
+        <text x={cx} y={cy+14} textAnchor="middle" fontSize="11" fill={C.muted} fontFamily="Plus Jakarta Sans">Registrants</text>
+      </svg>
+    );
+  }
+
+  function HBarChart({ data }) {
+    const max = Math.max(...data.map(d=>d.value), 1);
+    return (
+      <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
+        {data.map((d,i) => (
+          <div key={d.id} style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:148, fontSize:12, color:C.navy, textAlign:'right', flexShrink:0, fontWeight:500, lineHeight:1.3 }}>{d.label}</div>
+            <div style={{ flex:1, height:22, background:C.gray100, borderRadius:5, overflow:'hidden', position:'relative' }}>
+              <div style={{
+                position:'absolute', top:0, left:0, height:'100%',
+                width:`${(d.value/max)*100}%`,
+                background: d.color || C.orange,
+                borderRadius:5,
+                animation:`barGrow 0.8s ease ${i*0.06}s both`,
+              }}/>
+            </div>
+            <div style={{ width:24, fontSize:12, fontWeight:700, color:C.navy, flexShrink:0, textAlign:'right' }}>{d.value}</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function LineChart({ data, w=520, h=150 }) {
+    const pd = { t:10, r:12, b:28, l:32 };
+    const iw=w-pd.l-pd.r, ih=h-pd.t-pd.b;
+    const max=Math.max(...data,1);
+    const pts=data.map((v,i)=>({ x:pd.l+(i/(data.length-1))*iw, y:pd.t+ih-(v/max)*ih }));
+    const line=pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const area=`${line} L${pts.at(-1).x},${pd.t+ih} L${pts[0].x},${pd.t+ih}Z`;
+    const base=new Date(); const xTicks=[];
+    for (let i=29;i>=0;i-=7) { const d=new Date(base.getTime()-i*86400000); xTicks.push({i:29-i, label:`${d.getMonth()+1}/${d.getDate()}`}); }
+    const yTicks=[Math.round(max*.5), max];
+    return (
+      <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+        {[.25,.5,.75,1].map(f=><line key={f} x1={pd.l} y1={pd.t+ih-f*ih} x2={pd.l+iw} y2={pd.t+ih-f*ih} stroke={C.border} strokeWidth="1"/>)}
+        <path d={area} fill={C.orange} opacity="0.08"/>
+        <path d={line} fill="none" stroke={C.orange} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        {pts.filter((_,i)=>i%5===0||i===pts.length-1).map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="3.5" fill={C.orange}/>)}
+        {xTicks.map(({i,label})=><text key={i} x={pd.l+(i/(data.length-1))*iw} y={h-4} textAnchor="middle" fontSize="10" fill="#94A3B8" fontFamily="Plus Jakarta Sans">{label}</text>)}
+        {yTicks.map(v=><text key={v} x={pd.l-4} y={pd.t+ih-(v/max)*ih+4} textAnchor="end" fontSize="10" fill="#94A3B8" fontFamily="Plus Jakarta Sans">{v}</text>)}
+      </svg>
+    );
+  }
+
+  /* ─────────────────── Sidebar ─────────────────── */
+  const NAV = [
+    { id:'overview',      icon:'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z', label:'Overview' },
+    { id:'participants',  icon:'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z', label:'Participants' },
+    { id:'analytics',     icon:'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z', label:'Analytics' },
+  ];
+
+  function Sidebar({ active, onSelect }) {
+    return (
+      <aside style={{ width:220, background:C.navy, height:'100vh', display:'flex', flexDirection:'column', flexShrink:0 }}>
+        <div style={{ padding:'20px 20px 16px', borderBottom:`1px solid rgba(255,255,255,.08)` }}>
+          <div style={{ background:'white', borderRadius:8, padding:'8px 10px', marginBottom:10 }}>
+            <img src="uploads/AW_EMD_Logo.png" alt="EMD" style={{ height:64, objectFit:'contain', display:'block', width:'100%' }}/>
+          </div>
+          <div style={{ color:'rgba(255,255,255,.45)', fontSize:11, lineHeight:1.5 }}>
+            Technology Showcase 2026<br/>
+            <span style={{ color:'rgba(255,255,255,.3)' }}>15–16 June · Bangkok</span>
+          </div>
+        </div>
+        <nav style={{ padding:'12px 10px', flex:1 }}>
+          {NAV.map(n => {
+            const active_ = active === n.id;
+            return (
+              <button key={n.id} onClick={()=>onSelect(n.id)}
+                style={{ width:'100%', display:'flex', alignItems:'center', gap:10, padding:'9px 12px', borderRadius:8, border:'none', marginBottom:3, background:active_?'rgba(0,132,61,.18)':'transparent', color:active_?'#4ADE80':'rgba(255,255,255,.55)', cursor:'pointer', textAlign:'left', borderLeft:`3px solid ${active_?C.orange:'transparent'}`, transition:'all .18s' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={active_?C.orange:'rgba(255,255,255,.45)'}><path d={n.icon}/></svg>
+                <span style={{ fontSize:13, fontWeight:active_?600:400 }}>{n.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+        <div style={{ padding:'12px 16px', borderTop:`1px solid rgba(255,255,255,.08)` }}>
+          <div style={{ marginBottom:10 }}>
+            <div style={{ fontSize:9, color:'rgba(255,255,255,.3)', textTransform:'uppercase', letterSpacing:1, marginBottom:5 }}>Registration URL</div>
+            <div
+              onClick={() => navigator.clipboard?.writeText(`http://${window.location.host}/Registration%20Form.html`)}
+              title="Click to copy"
+              style={{ fontSize:10, color:'rgba(255,255,255,.55)', wordBreak:'break-all', lineHeight:1.7, cursor:'pointer', padding:'7px 9px', borderRadius:6, background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)' }}>
+              {`http://${window.location.host}`}<br/>{`/Registration Form.html`}
+            </div>
+          </div>
+          <a href="Registration Form.html"
+            style={{ display:'flex', alignItems:'center', gap:8, background:C.orange, color:'white', padding:'9px 14px', borderRadius:8, fontSize:12, fontWeight:700, textDecoration:'none', justifyContent:'center' }}>
+            + Register Participant
+          </a>
+        </div>
+      </aside>
+    );
+  }
+
+  /* ─────────────────── Stat Card ─────────────────── */
+  function StatCard({ label, value, sub, color, icon }) {
+    return (
+      <div style={{ background:C.white, borderRadius:12, padding:'18px 20px', boxShadow:'0 1px 8px rgba(11,37,69,.06)', borderTop:`3px solid ${color}`, flex:1, minWidth:0 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
+          <span style={{ fontSize:12, color:C.muted, fontWeight:500 }}>{label}</span>
+          <div style={{ width:32, height:32, borderRadius:8, background:`${color}15`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={color}><path d={icon}/></svg>
+          </div>
+        </div>
+        <div style={{ fontSize:28, fontWeight:800, color:C.navy, lineHeight:1 }}>{value}</div>
+        {sub && <div style={{ fontSize:12, color:C.muted, marginTop:5 }}>{sub}</div>}
+      </div>
+    );
+  }
+
+  /* ─────────────────── Overview Tab ─────────────────── */
+  function OverviewTab({ all }) {
+    const now = new Date();
+    const todayCount = all.filter(p => {
+      const d = new Date(p.registrationDate);
+      return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
+    }).length;
+    const confirmedCount = all.filter(p=>p.status==='confirmed').length;
+    const industriesCount = new Set(all.map(p=>p.businessType)).size;
+
+    const bizCounts = Object.entries(
+      all.reduce((acc,p) => { acc[p.businessType]=(acc[p.businessType]||0)+1; return acc; }, {})
+    ).map(([id,count])=>({ id, label:BIZ_MAP[id]?.label||id, value:count, color:BIZ_MAP[id]?.color||C.muted }))
+      .sort((a,b)=>b.value-a.value);
+
+    const dailyData = (() => {
+      const arr = Array(30).fill(0);
+      for (const p of all) {
+        const d = Math.floor((now - new Date(p.registrationDate))/86400000);
+        if (d>=0 && d<30) arr[29-d]++;
+      }
+      return arr;
+    })();
+
+    const top5 = bizCounts.slice(0,5);
+    const otherCount = bizCounts.slice(5).reduce((s,x)=>s+x.value,0);
+    const donutData = [...top5, ...(otherCount>0?[{id:'_other',label:'Others',value:otherCount,color:'#CBD5E1'}]:[])];
+
+    return (
+      <div className="fade-up">
+        {/* Stat row */}
+        <div style={{ display:'flex', gap:14, marginBottom:20 }}>
+          <StatCard label="Total Registrants" value={all.length} sub={`${confirmedCount} confirmed`} color={C.orange}
+            icon="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+          <StatCard label="Industries" value={industriesCount} sub="business sectors" color={C.navyMid}
+            icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          <StatCard label="Registrations Today" value={todayCount} sub={now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})} color="#10B981"
+            icon="M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z"/>
+          <StatCard label="Avg. per Day" value={Math.round(all.length/30)} sub="last 30 days" color="#8B5CF6"
+            icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+        </div>
+
+        {/* Charts row */}
+        <div style={{ display:'grid', gridTemplateColumns:'240px 1fr', gap:14, marginBottom:14 }}>
+          {/* Donut */}
+          <div style={{ background:C.white, borderRadius:12, padding:'18px', boxShadow:'0 1px 8px rgba(11,37,69,.06)' }}>
+            <div style={{ fontSize:13, fontWeight:700, color:C.navy, marginBottom:14 }}>By Industry</div>
+            <div style={{ display:'flex', justifyContent:'center', marginBottom:14 }}>
+              <DonutChart data={donutData} size={160}/>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+              {donutData.map(d=>(
+                <div key={d.id} style={{ display:'flex', alignItems:'center', gap:8, fontSize:11 }}>
+                  <div style={{ width:10, height:10, borderRadius:2, background:d.color, flexShrink:0 }}/>
+                  <span style={{ flex:1, color:C.muted, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{d.label}</span>
+                  <span style={{ fontWeight:700, color:C.navy }}>{d.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bar chart */}
+          <div style={{ background:C.white, borderRadius:12, padding:'18px', boxShadow:'0 1px 8px rgba(11,37,69,.06)' }}>
+            <div style={{ fontSize:13, fontWeight:700, color:C.navy, marginBottom:14 }}>Registrations by Business Type</div>
+            <HBarChart data={bizCounts}/>
+          </div>
+        </div>
+
+        {/* Line chart */}
+        <div style={{ background:C.white, borderRadius:12, padding:'18px', boxShadow:'0 1px 8px rgba(11,37,69,.06)' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <div style={{ fontSize:13, fontWeight:700, color:C.navy }}>Registration Trend — Last 30 Days</div>
+            <div style={{ fontSize:11, color:C.muted }}>{all.length} total · {todayCount} today</div>
+          </div>
+          <LineChart data={dailyData}/>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─────────────────── Participants Tab ─────────────────── */
+  function ParticipantsTab({ all, onEdit, onDelete }) {
+    const [search, setSearch] = useState('');
+    const [filterBiz, setFilterBiz] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
+    const [page, setPage] = useState(1);
+    const [selected, setSelected] = useState(null);
+    const [confirming, setConfirming] = useState(false);
+    const PER = 12;
+
+    const filtered = useMemo(() => {
+      let r = all;
+      if (search) {
+        const q = search.toLowerCase();
+        r = r.filter(p => `${p.firstName} ${p.lastName} ${p.company}`.toLowerCase().includes(q));
+      }
+      if (filterBiz) r = r.filter(p=>p.businessType===filterBiz);
+      if (filterStatus) r = r.filter(p=>p.status===filterStatus);
+      return r;
+    }, [all, search, filterBiz, filterStatus]);
+
+    const pages = Math.ceil(filtered.length / PER);
+    const slice = filtered.slice((page-1)*PER, page*PER);
+    const fmtDate = d => new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+
+    return (
+      <div className="fade-up">
+        {/* Filters */}
+        <div style={{ display:'flex', gap:10, marginBottom:16, alignItems:'center' }}>
+          <div style={{ flex:1, position:'relative' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={C.muted} style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)' }}>
+              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}} placeholder="Search by name or company…"
+              style={{ width:'100%', padding:'9px 12px 9px 33px', borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, color:C.navy, background:C.white }} />
+          </div>
+          <select value={filterBiz} onChange={e=>{setFilterBiz(e.target.value);setPage(1);}}
+            style={{ padding:'9px 32px 9px 12px', borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, color:filterBiz?C.navy:C.muted, background:C.white, minWidth:180 }}>
+            <option value="">All Industries</option>
+            {Object.entries(BIZ_MAP).map(([id,{label}])=><option key={id} value={id}>{label}</option>)}
+          </select>
+          <select value={filterStatus} onChange={e=>{setFilterStatus(e.target.value);setPage(1);}}
+            style={{ padding:'9px 32px 9px 12px', borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, color:filterStatus?C.navy:C.muted, background:C.white }}>
+            <option value="">All Status</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="pending">Pending</option>
+          </select>
+          <div style={{ fontSize:12, color:C.muted, whiteSpace:'nowrap' }}>{filtered.length} results</div>
+        </div>
+
+        {/* Table */}
+        <div style={{ background:C.white, borderRadius:12, overflow:'hidden', boxShadow:'0 1px 8px rgba(11,37,69,.06)', marginBottom:14 }}>
+          <table style={{ width:'100%', borderCollapse:'collapse' }}>
+            <thead>
+              <tr style={{ background:C.gray50, borderBottom:`2px solid ${C.border}` }}>
+                {['#','Name','Company','Industry','Interests','Registered','Status'].map(h=>(
+                  <th key={h} style={{ padding:'10px 14px', textAlign:'left', fontSize:11, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:.5, whiteSpace:'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {slice.length === 0 ? (
+                <tr><td colSpan="7" style={{ padding:'32px', textAlign:'center', color:C.muted, fontSize:13 }}>No participants match your filters</td></tr>
+              ) : slice.map((p,i) => {
+                const biz = BIZ_MAP[p.businessType] || { label:p.businessType, color:C.muted };
+                return (
+                  <tr key={p.id} onClick={()=>{ setSelected(selected?.id===p.id?null:p); setConfirming(false); }}
+                    style={{ borderBottom:`1px solid ${C.border}`, cursor:'pointer', background:selected?.id===p.id?C.orangeBg:'white', transition:'background .1s' }}>
+                    <td style={{ padding:'10px 14px', fontSize:12, color:C.muted, fontWeight:500 }}>{(page-1)*PER+i+1}</td>
+                    <td style={{ padding:'10px 14px' }}>
+                      <div style={{ fontSize:13, fontWeight:600, color:C.navy }}>{p.prefix} {p.firstName} {p.lastName}</div>
+                      <div style={{ fontSize:11, color:C.muted }}>{p.title}</div>
+                    </td>
+                    <td style={{ padding:'10px 14px', fontSize:12, color:C.navy, maxWidth:150 }}>
+                      <div style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.company}</div>
+                      <div style={{ fontSize:11, color:C.muted }}>{p.country}</div>
+                    </td>
+                    <td style={{ padding:'10px 14px' }}>
+                      <span style={{ fontSize:11, fontWeight:600, color:'white', background:biz.color, borderRadius:20, padding:'3px 9px', whiteSpace:'nowrap' }}>
+                        {biz.label}
+                      </span>
+                    </td>
+                    <td style={{ padding:'10px 14px' }}>
+                      <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+                        {p.interests.map(id=>(
+                          <span key={id} style={{ fontSize:10, color:C.navyMid, background:C.gray100, borderRadius:4, padding:'2px 6px', whiteSpace:'nowrap' }}>
+                            {PROD_MAP[id]?.split(' ')[0]}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td style={{ padding:'10px 14px', fontSize:12, color:C.muted, whiteSpace:'nowrap' }}>{fmtDate(p.registrationDate)}</td>
+                    <td style={{ padding:'10px 14px' }}>
+                      <span style={{ fontSize:11, fontWeight:600, color:p.status==='confirmed'?C.success:C.danger, background:p.status==='confirmed'?C.successBg:C.dangerBg, borderRadius:20, padding:'3px 9px' }}>
+                        {p.status==='confirmed'?'Confirmed':'Pending'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Detail panel */}
+        {selected && (
+          <div style={{ background:C.white, borderRadius:12, padding:'18px', boxShadow:'0 1px 8px rgba(11,37,69,.06)', marginBottom:14, display:'flex', gap:20, alignItems:'flex-start' }}>
+            <div style={{ width:48, height:48, borderRadius:'50%', background:`${BIZ_MAP[selected.businessType]?.color||C.orange}20`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:16, fontWeight:800, color:BIZ_MAP[selected.businessType]?.color||C.orange }}>
+              {selected.firstName[0]}{selected.lastName[0]}
+            </div>
+            <div style={{ flex:1, display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
+              {[
+                ['Full Name', `${selected.prefix} ${selected.firstName} ${selected.lastName}`],
+                ['Position', selected.title],
+                ['Email', selected.email||'—'],
+                ['Phone', selected.phone||'—'],
+                ['Company', selected.company],
+                ['Country', selected.country],
+                ['Industry', BIZ_MAP[selected.businessType]?.label||selected.businessType],
+                ['Source', selected.source||'—'],
+              ].map(([k,v])=>(
+                <div key={k}>
+                  <div style={{ fontSize:11, color:C.muted, marginBottom:2 }}>{k}</div>
+                  <div style={{ fontSize:13, fontWeight:500, color:C.navy }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0, alignItems:'flex-end' }}>
+              <button onClick={()=>{ setSelected(null); setConfirming(false); }}
+                style={{ background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:20, lineHeight:1, padding:4 }}>×</button>
+              <button onClick={()=>onEdit(selected)}
+                style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 14px', borderRadius:7, border:`1.5px solid ${C.border}`, background:C.white, color:C.navy, fontSize:12, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.navy} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                Edit
+              </button>
+              {confirming ? (
+                <div style={{ display:'flex', gap:5 }}>
+                  <button onClick={()=>{ onDelete(selected._docId || selected.id); setSelected(null); setConfirming(false); }}
+                    style={{ padding:'6px 12px', borderRadius:7, border:'none', background:C.danger, color:'white', fontSize:12, fontWeight:700, cursor:'pointer' }}>
+                    Confirm
+                  </button>
+                  <button onClick={()=>setConfirming(false)}
+                    style={{ padding:'6px 10px', borderRadius:7, border:`1.5px solid ${C.border}`, background:'transparent', color:C.navy, fontSize:12, cursor:'pointer' }}>
+                    No
+                  </button>
+                </div>
+              ) : (
+                <button onClick={()=>setConfirming(true)}
+                  style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 14px', borderRadius:7, border:`1.5px solid ${C.danger}55`, background:`${C.danger}08`, color:C.danger, fontSize:12, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.danger} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                  </svg>
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pages > 1 && (
+          <div style={{ display:'flex', gap:6, justifyContent:'center' }}>
+            {Array.from({length:pages},(_,i)=>i+1).map(n=>(
+              <button key={n} onClick={()=>setPage(n)}
+                style={{ width:32, height:32, borderRadius:6, border:`1.5px solid ${n===page?C.orange:C.border}`, background:n===page?C.orange:C.white, color:n===page?'white':C.navy, fontSize:13, fontWeight:n===page?700:400, cursor:'pointer' }}>
+                {n}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /* ─────────────────── Analytics Tab ─────────────────── */
+  function AnalyticsTab({ all }) {
+    const prodCounts = Object.entries(
+      all.flatMap(p=>p.interests).reduce((acc,id)=>{acc[id]=(acc[id]||0)+1;return acc;},{})
+    ).map(([id,count])=>({ id, label:PROD_MAP[id]||id, value:count, color:C.orange })).sort((a,b)=>b.value-a.value);
+
+    const sourceCounts = Object.entries(
+      all.reduce((acc,p)=>{const k=p.source||'Unknown';acc[k]=(acc[k]||0)+1;return acc;},{})
+    ).map(([label,value])=>({id:label,label,value,color:C.navyMid})).sort((a,b)=>b.value-a.value);
+
+    const countryCounts = Object.entries(
+      all.reduce((acc,p)=>{acc[p.country]=(acc[p.country]||0)+1;return acc;},{})
+    ).map(([label,value])=>({id:label,label,value,color:'#10B981'})).sort((a,b)=>b.value-a.value).slice(0,6);
+
+    const topCompanies = Object.entries(
+      all.reduce((acc,p)=>{acc[p.company]=(acc[p.company]||0)+1;return acc;},{})
+    ).map(([label,value])=>({id:label,label,value,color:'#8B5CF6'})).sort((a,b)=>b.value-a.value).slice(0,8);
+
+    const Section = ({title, children}) => (
+      <div style={{ background:C.white, borderRadius:12, padding:'18px', boxShadow:'0 1px 8px rgba(11,37,69,.06)' }}>
+        <div style={{ fontSize:13, fontWeight:700, color:C.navy, marginBottom:16 }}>{title}</div>
+        {children}
+      </div>
+    );
+
+    return (
+      <div className="fade-up" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+        <Section title="Product Interest Ranking">
+          <HBarChart data={prodCounts}/>
+        </Section>
+        <Section title="Registration Source">
+          <HBarChart data={sourceCounts}/>
+        </Section>
+        <Section title="Top Companies by Participant Count">
+          <HBarChart data={topCompanies}/>
+        </Section>
+        <Section title="Country Distribution">
+          <HBarChart data={countryCounts}/>
+        </Section>
+      </div>
+    );
+  }
+
+  /* ─────────────────── Edit Modal ─────────────────── */
+  function EditModal({ participant, onSave, onClose }) {
+    const [f, setF] = useState({
+      prefix: participant.prefix || 'Mr.',
+      firstName: participant.firstName || '',
+      lastName: participant.lastName || '',
+      title: participant.title || '',
+      email: participant.email || '',
+      phone: participant.phone || '',
+      company: participant.company || '',
+      country: participant.country || 'Thailand',
+      businessType: participant.businessType || '',
+      interests: participant.interests || [],
+      source: participant.source || '',
+      status: participant.status || 'confirmed',
+    });
+    const u = k => e => setF(p => ({ ...p, [k]: e.target.value }));
+    const toggleInt = id => setF(p => ({
+      ...p,
+      interests: p.interests.includes(id) ? p.interests.filter(x => x !== id) : [...p.interests, id],
+    }));
+    const inp = { width:'100%', padding:'8px 12px', borderRadius:7, border:`1.5px solid ${C.border}`, fontSize:13, color:C.navy, background:C.gray50, fontFamily:'inherit' };
+    return (
+      <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}
+        onClick={e => e.target === e.currentTarget && onClose()}>
+        <div style={{ background:C.white, borderRadius:16, width:580, maxHeight:'90vh', overflow:'hidden', display:'flex', flexDirection:'column', boxShadow:'0 8px 48px rgba(0,0,0,.2)' }}>
+          <div style={{ padding:'16px 24px', borderBottom:`1px solid ${C.border}`, display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
+            <div>
+              <div style={{ fontSize:15, fontWeight:700, color:C.navy }}>Edit Participant</div>
+              <div style={{ fontSize:11, color:C.muted }}>{participant.id}</div>
+            </div>
+            <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:22, lineHeight:1, padding:4 }}>×</button>
+          </div>
+          <div style={{ overflowY:'auto', padding:'18px 24px', display:'flex', flexDirection:'column', gap:12 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'90px 1fr 1fr', gap:10 }}>
+              <div>
+                <div style={{ fontSize:11, fontWeight:600, color:C.muted, marginBottom:5 }}>Prefix</div>
+                <select value={f.prefix} onChange={u('prefix')} style={inp}>
+                  {['Mr.','Ms.','Dr.','Eng.'].map(v=><option key={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize:11, fontWeight:600, color:C.muted, marginBottom:5 }}>First Name</div>
+                <input value={f.firstName} onChange={u('firstName')} style={inp}/>
+              </div>
+              <div>
+                <div style={{ fontSize:11, fontWeight:600, color:C.muted, marginBottom:5 }}>Last Name</div>
+                <input value={f.lastName} onChange={u('lastName')} style={inp}/>
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize:11, fontWeight:600, color:C.muted, marginBottom:5 }}>Job Title</div>
+              <input value={f.title} onChange={u('title')} style={inp}/>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+              <div>
+                <div style={{ fontSize:11, fontWeight:600, color:C.muted, marginBottom:5 }}>Email</div>
+                <input type="email" value={f.email} onChange={u('email')} style={inp}/>
+              </div>
+              <div>
+                <div style={{ fontSize:11, fontWeight:600, color:C.muted, marginBottom:5 }}>Phone</div>
+                <input value={f.phone} onChange={u('phone')} style={inp}/>
+              </div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 130px', gap:10 }}>
+              <div>
+                <div style={{ fontSize:11, fontWeight:600, color:C.muted, marginBottom:5 }}>Company</div>
+                <input value={f.company} onChange={u('company')} style={inp}/>
+              </div>
+              <div>
+                <div style={{ fontSize:11, fontWeight:600, color:C.muted, marginBottom:5 }}>Country</div>
+                <select value={f.country} onChange={u('country')} style={inp}>
+                  {['Thailand','Myanmar','Cambodia','Vietnam','Malaysia','Indonesia','Singapore','Philippines','Other'].map(c=><option key={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+              <div>
+                <div style={{ fontSize:11, fontWeight:600, color:C.muted, marginBottom:5 }}>Industry</div>
+                <select value={f.businessType} onChange={u('businessType')} style={inp}>
+                  <option value="">Select…</option>
+                  {Object.entries(BIZ_MAP).map(([id,{label}])=><option key={id} value={id}>{label}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize:11, fontWeight:600, color:C.muted, marginBottom:5 }}>Status</div>
+                <select value={f.status} onChange={u('status')} style={inp}>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="pending">Pending</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize:11, fontWeight:600, color:C.muted, marginBottom:8 }}>Interests</div>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                {Object.entries(PROD_MAP).map(([id, label]) => {
+                  const on = f.interests.includes(id);
+                  return (
+                    <button key={id} type="button" onClick={() => toggleInt(id)}
+                      style={{ padding:'5px 12px', borderRadius:20, border:`1.5px solid ${on?C.orange:C.border}`, background:on?C.orangeBg:'transparent', color:on?C.navy:C.muted, fontSize:12, fontWeight:on?600:400, cursor:'pointer', transition:'all .15s' }}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          <div style={{ padding:'14px 24px', borderTop:`1px solid ${C.border}`, display:'flex', justifyContent:'flex-end', gap:10, flexShrink:0 }}>
+            <button onClick={onClose}
+              style={{ padding:'8px 20px', borderRadius:8, border:`1.5px solid ${C.border}`, background:'transparent', color:C.navy, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+              Cancel
+            </button>
+            <button onClick={() => onSave(participant._docId || participant.id, f)}
+              style={{ padding:'8px 24px', borderRadius:8, border:'none', background:C.orange, color:'white', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─────────────────── App ─────────────────── */
+  function App() {
+    const [tab, setTab] = useState('overview');
+    const [all, setAll] = useState([]);
+    const [editing, setEditing] = useState(null);
+
+    useEffect(() => {
+      const unsub = db.collection('participants')
+        .onSnapshot(snapshot => {
+          const data = snapshot.docs
+            .map(doc => ({ _docId: doc.id, ...doc.data() }))
+            .sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate));
+          setAll(data);
+        }, () => {});
+      return () => unsub();
+    }, []);
+
+    const deleteParticipant = async (docId) => {
+      await db.collection('participants').doc(docId).delete().catch(() => {});
+      // onSnapshot will update state automatically
+    };
+
+    const updateParticipant = async (docId, updates) => {
+      const { _docId, ...clean } = updates;
+      await db.collection('participants').doc(docId).update(clean).catch(() => {});
+      setEditing(null);
+      // onSnapshot will update state automatically
+    };
+
+    const tabTitle = { overview:'Overview', participants:'Participants', analytics:'Analytics' };
+    const today = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+
+    return (
+      <div style={{ display:'flex', height:'100vh', fontFamily:"'Plus Jakarta Sans', sans-serif" }}>
+        {editing && <EditModal participant={editing} onSave={updateParticipant} onClose={() => setEditing(null)} />}
+        <Sidebar active={tab} onSelect={t=>{setTab(t);}} />
+        <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+          {/* Top bar */}
+          <div style={{ background:C.white, borderBottom:`1px solid ${C.border}`, padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:52, flexShrink:0 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontSize:13, color:C.muted }}>Dashboard</span>
+              <span style={{ color:C.border }}>/</span>
+              <span style={{ fontSize:13, fontWeight:600, color:C.navy }}>{tabTitle[tab]}</span>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ fontSize:12, color:C.muted }}>
+                <span style={{ width:8, height:8, borderRadius:'50%', background:'#10B981', display:'inline-block', marginRight:5 }}/>
+                {`Live · ${today}`}
+              </div>
+              <button onClick={() => exportToExcel(all)}
+                style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:7, border:`1.5px solid ${C.border}`, background:C.white, color:C.navy, fontSize:12, fontWeight:600, cursor:'pointer' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.navy} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+                Export Excel
+              </button>
+              <div style={{ width:32, height:32, borderRadius:'50%', background:C.orange, color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700 }}>A</div>
+            </div>
+          </div>
+
+          {/* Page header */}
+          <div style={{ background:C.white, padding:'16px 24px 14px', borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>
+            <h1 style={{ fontSize:20, fontWeight:800, color:C.navy }}>{tabTitle[tab]}</h1>
+            <p style={{ fontSize:12, color:C.muted, marginTop:2 }}>EMD Technology Showcase 2026 · Centara Grand Hotel, Bangkok · 15–16 June 2026</p>
+          </div>
+
+          {/* Content */}
+          <div style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
+            {tab === 'overview'      && <OverviewTab all={all} />}
+            {tab === 'participants'  && <ParticipantsTab all={all} onEdit={setEditing} onDelete={deleteParticipant} />}
+            {tab === 'analytics'    && <AnalyticsTab all={all} />}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function mountApp() {
+    const el = document.getElementById('root');
+    if (el) ReactDOM.createRoot(el).render(<App />);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mountApp);
+  } else {
+    mountApp();
+  }
+</script>
+</body>
+</html>

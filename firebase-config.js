@@ -1,13 +1,8 @@
-// ─────────────────────────────────────────────────────────────
-//  Firebase Configuration — EMD Technology Showcase 2026
-//  Fill in your project values from:
-//  Firebase Console → Project Settings → Your apps → Web app → SDK setup
-// ─────────────────────────────────────────────────────────────
 firebase.initializeApp({
-  apiKey:            "REPLACE_WITH_YOUR_API_KEY",
-  authDomain:        "REPLACE_WITH_YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "REPLACE_WITH_YOUR_PROJECT_ID",
-  storageBucket:     "REPLACE_WITH_YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
-  appId:             "REPLACE_WITH_YOUR_APP_ID",
+  apiKey:            "AIzaSyDYP5Mp3_IHXwdoh2UGzVanQZLxS3t9LoE",
+  authDomain:        "emd-showcase-2026.firebaseapp.com",
+  projectId:         "emd-showcase-2026",
+  storageBucket:     "emd-showcase-2026.firebasestorage.app",
+  messagingSenderId: "790307127935",
+  appId:             "1:790307127935:web:276b905430a601d2ffb54a",
 });

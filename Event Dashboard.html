@@ -367,6 +367,12 @@
     ).map(([id,count])=>({ id, label:BIZ_MAP[id]?.label||id, value:count, color:BIZ_MAP[id]?.color||C.muted }))
       .sort((a,b)=>b.value-a.value);
 
+    const PROD_COLORS = { motors:'#D97706', drives:'#10B981', mechanical:'#1565C0', filters:'#6366F1', fiber:'#8B5CF6' };
+    const prodCounts = Object.entries(
+      all.flatMap(p => p.interests || []).reduce((acc,id) => { acc[id]=(acc[id]||0)+1; return acc; }, {})
+    ).map(([id,count])=>({ id, label:PROD_MAP[id]||id, value:count, color:PROD_COLORS[id]||C.orange }))
+      .sort((a,b)=>b.value-a.value);
+
     const dailyData = (() => {
       const arr = Array(30).fill(0);
       for (const p of all) {
@@ -415,8 +421,8 @@
 
           {/* Bar chart */}
           <div style={{ background:C.white, borderRadius:12, padding:'18px', boxShadow:'0 1px 8px rgba(11,37,69,.06)' }}>
-            <div style={{ fontSize:13, fontWeight:700, color:C.navy, marginBottom:14 }}>Registrations by Business Type</div>
-            <HBarChart data={bizCounts}/>
+            <div style={{ fontSize:13, fontWeight:700, color:C.navy, marginBottom:14 }}>Products of Interest</div>
+            <HBarChart data={prodCounts}/>
           </div>
         </div>
 

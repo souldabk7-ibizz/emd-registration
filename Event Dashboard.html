@@ -138,7 +138,8 @@
       'Industry':          BIZ_MAP[p.businessType]?.label || p.businessType,
       'Interests':         (p.interests || []).map(id => PROD_MAP[id] || id).join(', '),
       'Source':            p.source || '',
-      'Registration Date': new Date(p.registrationDate).toLocaleString('en-GB'),
+      'Registration Date': new Date(p.registrationDate).toLocaleDateString('en-GB'),
+      'Registration Time': new Date(p.registrationDate).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }),
       'Status':            p.status,
     }));
 
@@ -146,7 +147,7 @@
     ws['!cols'] = [
       {wch:14},{wch:8},{wch:14},{wch:14},{wch:22},
       {wch:28},{wch:16},{wch:26},{wch:12},
-      {wch:26},{wch:38},{wch:26},{wch:20},{wch:12},
+      {wch:26},{wch:38},{wch:26},{wch:14},{wch:10},{wch:12},
     ];
 
     const wb = XLSX.utils.book_new();
@@ -231,6 +232,7 @@
   ];
 
   function Sidebar({ active, onSelect }) {
+    const regFormUrl = new URL('Registration%20Form.html', window.location.href).href;
     return (
       <aside className="dash-sidebar" style={{ width:220, background:C.navy, height:'100vh', display:'flex', flexDirection:'column', flexShrink:0 }}>
         <div className="dash-sidebar-logo" style={{ padding:'20px 20px 16px', borderBottom:`1px solid rgba(255,255,255,.08)` }}>
@@ -267,10 +269,10 @@
           <div style={{ marginBottom:10 }}>
             <div style={{ fontSize:9, color:'rgba(255,255,255,.3)', textTransform:'uppercase', letterSpacing:1, marginBottom:5 }}>Registration URL</div>
             <div
-              onClick={() => navigator.clipboard?.writeText(`http://${window.location.host}/Registration%20Form.html`)}
+              onClick={() => navigator.clipboard?.writeText(regFormUrl)}
               title="Click to copy"
               style={{ fontSize:10, color:'rgba(255,255,255,.55)', wordBreak:'break-all', lineHeight:1.7, cursor:'pointer', padding:'7px 9px', borderRadius:6, background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)' }}>
-              {`http://${window.location.host}`}<br/>{`/Registration Form.html`}
+              {regFormUrl}
             </div>
           </div>
           <a href="Registration Form.html"

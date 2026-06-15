@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Event Registration — EMD Technology Showcase 2026</title>
+  <title>Event Registration</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
@@ -67,6 +67,19 @@
 <script type="text/babel">
   const { useState } = React;
   const db = firebase.firestore();
+
+  const EVENT_CONFIG = {
+    'emd-2026': {
+      name:  'EMD Technology Showcase 2026',
+      short: 'Technology Showcase 2026',
+      date:  '15–16 June 2026',
+      venue: 'Centara Grand Hotel, Bangkok',
+    },
+  };
+  const DEFAULT_EVENT = 'emd-2026';
+  const eventId = new URLSearchParams(location.search).get('event') || DEFAULT_EVENT;
+  const EVENT = EVENT_CONFIG[eventId] || EVENT_CONFIG[DEFAULT_EVENT];
+  const participantsCol = () => db.collection('events').doc(eventId).collection('participants');
 
   const C = {
     navy: '#0D2818', navyMid: '#1A5C30', orange: '#00843D',
@@ -328,9 +341,9 @@
           <Row k="Source" v={d.source||'—'} />
         </div>
         <div style={{ background:`${C.orange}12`, border:`1px solid ${C.orange}35`, borderRadius:10, padding:'12px 16px', fontSize:13, color:C.navy, lineHeight:1.7 }}>
-          <strong>Event:</strong> EMD Technology Showcase 2026 &nbsp;·&nbsp;
-          <strong>Date:</strong> 15–16 June 2026 &nbsp;·&nbsp;
-          <strong>Venue:</strong> Centara Grand Hotel, Bangkok
+          <strong>Event:</strong> {EVENT.name} &nbsp;·&nbsp;
+          <strong>Date:</strong> {EVENT.date} &nbsp;·&nbsp;
+          <strong>Venue:</strong> {EVENT.venue}
         </div>
         <p style={{ fontSize:12, color:C.muted, lineHeight:1.6 }}>
           By submitting this form, you consent to EMD contacting you with event updates and product information.
@@ -350,7 +363,7 @@
         </div>
         <h2 style={{ fontSize:26, fontWeight:800, color:C.navy, marginBottom:8 }}>Registration Successful!</h2>
         <p style={{ fontSize:14, color:C.muted, marginBottom:24, maxWidth:360 }}>
-          Thank you, <strong>{d.firstName}</strong>. We look forward to seeing you at EMD Technology Showcase 2026.
+          Thank you, <strong>{d.firstName}</strong>. We look forward to seeing you at {EVENT.name}.
         </p>
         <div style={{ background:C.navy, color:'white', borderRadius:12, padding:'14px 32px', marginBottom:24 }}>
           <div style={{ fontSize:11, opacity:.6, marginBottom:3, letterSpacing:1, textTransform:'uppercase' }}>Registration ID</div>
@@ -408,9 +421,9 @@
       if (!validate()) return;
       if (step < 4) { setStep(s => s + 1); return; }
       const id = 'EMD-' + (10000 + Math.floor(Math.random() * 90000));
-      const p = { ...d, businessType: d.biz, id, registrationDate: new Date().toISOString(), status: 'confirmed' };
+      const p = { ...d, businessType: d.biz, id, eventId, registrationDate: new Date().toISOString(), status: 'confirmed' };
       try {
-        await db.collection('participants').add(p);
+        await participantsCol().add(p);
       } catch(_) {}
       setRegId(id);
       setSubmitted(true);
@@ -441,8 +454,8 @@
         <header style={header} className="rform-header">
           <Logo />
           <div style={{ color:C.navy, textAlign:'right' }}>
-            <div style={{ fontSize:13, fontWeight:700 }}>EMD Technology Showcase 2026</div>
-            <div style={{ fontSize:11, color:C.muted }}>15–16 June 2026 · Bangkok, Thailand</div>
+            <div style={{ fontSize:13, fontWeight:700 }}>{EVENT.name}</div>
+            <div style={{ fontSize:11, color:C.muted }}>{EVENT.date} · {EVENT.venue}</div>
           </div>
         </header>
 

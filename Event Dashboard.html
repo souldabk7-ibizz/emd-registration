@@ -12,6 +12,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Plus Jakarta Sans', sans-serif; background: #EEF2F7; color: #0B2545; overflow: hidden; height: 100vh; }
@@ -352,8 +353,64 @@
     );
   }
 
+  /* ─────────────────── QR Code Card ─────────────────── */
+  function QRCodeCard({ activeEvent }) {
+    const qrRef = useRef(null);
+    const qrObj = useRef(null);
+    const EVENT = EVENT_CONFIG[activeEvent] || EVENT_CONFIG[DEFAULT_EVENT];
+
+    const regUrl = (() => {
+      const base = new URL('Registration%20Form.html', window.location.href);
+      return base.href;
+    })();
+
+    useEffect(() => {
+      if (!qrRef.current || typeof QRCode === 'undefined') return;
+      qrRef.current.innerHTML = '';
+      qrObj.current = new QRCode(qrRef.current, {
+        text: regUrl,
+        width: 200, height: 200,
+        colorDark: '#0D2818', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    }, [regUrl]);
+
+    const download = () => {
+      const canvas = qrRef.current?.querySelector('canvas');
+      if (!canvas) return;
+      const a = document.createElement('a');
+      a.download = `registration-qr-${activeEvent || 'event'}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    };
+
+    return (
+      <div style={{ background:C.white, borderRadius:12, padding:'20px 24px', boxShadow:'0 1px 8px rgba(11,37,69,.06)', display:'flex', gap:24, alignItems:'center', flexWrap:'wrap' }}>
+        <div ref={qrRef} style={{ flexShrink:0, lineHeight:0, borderRadius:8, overflow:'hidden', border:`1px solid ${C.border}` }} />
+        <div style={{ flex:1, minWidth:180 }}>
+          <div style={{ fontSize:13, fontWeight:800, color:C.navy, marginBottom:4 }}>Registration QR Code</div>
+          <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
+            <span style={{ width:8, height:8, borderRadius:'50%', background:'#10B981', display:'inline-block' }} />
+            <span style={{ fontSize:12, fontWeight:700, color:C.navy }}>Now open: {EVENT.label}</span>
+          </div>
+          <div style={{ fontSize:11, color:C.muted, marginBottom:14, wordBreak:'break-all', lineHeight:1.5 }}>{regUrl}</div>
+          <button onClick={download} style={{
+            display:'inline-flex', alignItems:'center', gap:6, padding:'8px 16px',
+            borderRadius:8, border:'none', background:C.orange, color:'white',
+            fontSize:12, fontWeight:700, cursor:'pointer',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+            </svg>
+            Download PNG
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   /* ─────────────────── Overview Tab ─────────────────── */
-  function OverviewTab({ all }) {
+  function OverviewTab({ all, activeEvent }) {
     const now = new Date();
     const todayCount = all.filter(p => {
       const d = new Date(p.registrationDate);
@@ -434,6 +491,9 @@
           </div>
           <LineChart data={dailyData}/>
         </div>
+
+        {/* QR Code */}
+        <QRCodeCard activeEvent={activeEvent} />
       </div>
     );
   }
@@ -911,7 +971,7 @@
 
           {/* Content */}
           <div className="dash-content" style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
-            {tab === 'overview'      && <OverviewTab all={all} />}
+            {tab === 'overview'      && <OverviewTab all={all} activeEvent={activeEvent} />}
             {tab === 'participants'  && <ParticipantsTab all={all} onEdit={setEditing} onDelete={deleteParticipant} />}
             {tab === 'analytics'    && <AnalyticsTab all={all} />}
           </div>

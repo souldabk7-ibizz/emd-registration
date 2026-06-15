@@ -106,7 +106,6 @@
     { id: 'motors',     label: 'Electric Motors',                  desc: 'High-efficiency AC/DC motors' },
     { id: 'drives',     label: 'Variable Speed Drives',            desc: 'Inverters & frequency converters' },
     { id: 'mechanical', label: 'Mechanical & Industrial Fans',     desc: 'Turbines, compressors, centrifugal fans' },
-    { id: 'filters',    label: 'Industrial Air Filters',           desc: 'HVAC & process air filtration' },
     { id: 'fiber',      label: 'Fiber Optic Sensing',              desc: 'DTS/DAS monitoring solutions' },
   ];
 
@@ -375,13 +374,9 @@
           A confirmation will be sent to <strong>{d.email}</strong>
         </p>
         <div style={{ display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center' }}>
-          <a href="Event Dashboard.html"
-            style={{ display:'inline-flex', alignItems:'center', gap:8, background:C.orange, color:'white', padding:'12px 28px', borderRadius:8, fontWeight:700, fontSize:14, textDecoration:'none' }}>
-            View Participant Dashboard →
-          </a>
           <button onClick={()=>window.location.reload()}
-            style={{ display:'inline-flex', alignItems:'center', gap:8, background:'transparent', color:C.navy, padding:'12px 22px', borderRadius:8, fontWeight:600, fontSize:14, border:`2px solid ${C.border}` }}>
-            Register Another
+            style={{ display:'inline-flex', alignItems:'center', gap:8, background:C.orange, color:'white', padding:'12px 28px', borderRadius:8, fontWeight:700, fontSize:14, border:'none', cursor:'pointer' }}>
+            Register Another Person
           </button>
         </div>
       </div>

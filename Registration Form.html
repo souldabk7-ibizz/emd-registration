@@ -70,16 +70,20 @@
 
   const EVENT_CONFIG = {
     'emd-2026': {
+      label: 'Event 1',
       name:  'EMD Technology Showcase 2026',
       short: 'Technology Showcase 2026',
       date:  '15–16 June 2026',
       venue: 'Centara Grand Hotel, Bangkok',
     },
+    'event-2': { label:'Event 2', name:'Event 2', short:'Event 2', date:'TBD', venue:'TBD' },
+    'event-3': { label:'Event 3', name:'Event 3', short:'Event 3', date:'TBD', venue:'TBD' },
+    'event-4': { label:'Event 4', name:'Event 4', short:'Event 4', date:'TBD', venue:'TBD' },
   };
   const DEFAULT_EVENT = 'emd-2026';
   const eventId = new URLSearchParams(location.search).get('event') || DEFAULT_EVENT;
   const EVENT = EVENT_CONFIG[eventId] || EVENT_CONFIG[DEFAULT_EVENT];
-  const participantsCol = () => db.collection('events').doc(eventId).collection('participants');
+  const participantsCol = db.collection('participants');
 
   const C = {
     navy: '#0D2818', navyMid: '#1A5C30', orange: '#00843D',
@@ -423,7 +427,7 @@
       const id = 'EMD-' + (10000 + Math.floor(Math.random() * 90000));
       const p = { ...d, businessType: d.biz, id, eventId, registrationDate: new Date().toISOString(), status: 'confirmed' };
       try {
-        await participantsCol().add(p);
+        await participantsCol.add(p);
       } catch(_) {}
       setRegId(id);
       setSubmitted(true);
@@ -455,7 +459,7 @@
           <Logo />
           <div style={{ color:C.navy, textAlign:'right' }}>
             <div style={{ fontSize:13, fontWeight:700 }}>{EVENT.name}</div>
-            <div style={{ fontSize:11, color:C.muted }}>{EVENT.date} · {EVENT.venue}</div>
+            <div style={{ fontSize:11, color:C.muted }}>{new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})} · {EVENT.venue}</div>
           </div>
         </header>
 

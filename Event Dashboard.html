@@ -93,16 +93,36 @@
 
   const EVENT_CONFIG = {
     'emd-2026': {
+      label: 'Event 1',
       name:  'EMD Technology Showcase 2026',
       short: 'Technology Showcase 2026',
       date:  '15–16 June 2026',
       venue: 'Centara Grand Hotel, Bangkok',
     },
+    'event-2': {
+      label: 'Event 2',
+      name:  'Event 2',
+      short: 'Event 2',
+      date:  'TBD',
+      venue: 'TBD',
+    },
+    'event-3': {
+      label: 'Event 3',
+      name:  'Event 3',
+      short: 'Event 3',
+      date:  'TBD',
+      venue: 'TBD',
+    },
+    'event-4': {
+      label: 'Event 4',
+      name:  'Event 4',
+      short: 'Event 4',
+      date:  'TBD',
+      venue: 'TBD',
+    },
   };
   const DEFAULT_EVENT = 'emd-2026';
-  const eventId = new URLSearchParams(location.search).get('event') || DEFAULT_EVENT;
-  const EVENT = EVENT_CONFIG[eventId] || EVENT_CONFIG[DEFAULT_EVENT];
-  const participantsCol = () => db.collection('events').doc(eventId).collection('participants');
+  const urlEventId = new URLSearchParams(location.search).get('event') || DEFAULT_EVENT;
 
   const C = {
     navy: '#0D2818', navyMid: '#1A5C30', navyLight: '#236b3d',
@@ -244,7 +264,7 @@
     { id:'register',      icon:'M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z', label:'Register', href:'Registration Form.html' },
   ];
 
-  function Sidebar({ active, onSelect }) {
+  function Sidebar({ active, onSelect, event, eventId, onEventChange }) {
     const regFormUrl = new URL('Registration%20Form.html', window.location.href).href;
     return (
       <aside className="dash-sidebar" style={{ width:220, background:C.navy, height:'100vh', display:'flex', flexDirection:'column', flexShrink:0 }}>
@@ -253,9 +273,24 @@
             <img src="uploads/AW_EMD_Logo_crop.png" alt="EMD" style={{ display:'block', width:'100%', height:'auto' }}/>
           </div>
           <div style={{ color:'rgba(255,255,255,.45)', fontSize:11, lineHeight:1.5 }}>
-            {EVENT.short}<br/>
+            {event.short}<br/>
             <span style={{ color:'rgba(255,255,255,.3)' }}>{new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span>
           </div>
+        </div>
+        {/* Event switcher */}
+        <div style={{ padding:'8px 10px', borderBottom:`1px solid rgba(255,255,255,.08)` }}>
+          <div style={{ fontSize:9, color:'rgba(255,255,255,.3)', textTransform:'uppercase', letterSpacing:1, marginBottom:6, paddingLeft:4 }}>Events</div>
+          {Object.entries(EVENT_CONFIG).map(([eid, ecfg]) => (
+            <button key={eid} onClick={() => onEventChange(eid)}
+              style={{ display:'block', width:'100%', padding:'6px 10px', borderRadius:6, border:'none', marginBottom:2,
+                background: eid === eventId ? 'rgba(255,255,255,.12)' : 'transparent',
+                color: eid === eventId ? 'white' : 'rgba(255,255,255,.45)',
+                fontSize:11, cursor:'pointer', textAlign:'left', transition:'all .15s',
+                borderLeft: `2px solid ${eid === eventId ? C.orange : 'transparent'}` }}>
+              <span style={{ fontWeight:700 }}>{ecfg.label}</span>
+              {ecfg.venue !== 'TBD' && <span style={{ display:'block', fontSize:9, opacity:.6, marginTop:1 }}>{ecfg.venue}</span>}
+            </button>
+          ))}
         </div>
         <nav className="dash-sidebar-nav" style={{ padding:'12px 10px', flex:1, display:'flex', flexDirection:'column' }}>
           {NAV.map(n => {
@@ -773,9 +808,14 @@
     const [tab, setTab] = useState('overview');
     const [all, setAll] = useState([]);
     const [editing, setEditing] = useState(null);
+    const [eventId, setEventId] = useState(urlEventId);
+
+    const EVENT = EVENT_CONFIG[eventId] || EVENT_CONFIG[DEFAULT_EVENT];
 
     useEffect(() => {
-      const unsub = participantsCol()
+      setAll([]);
+      const unsub = db.collection('participants')
+        .where('eventId', '==', eventId)
         .onSnapshot(snapshot => {
           const data = snapshot.docs
             .map(doc => ({ _docId: doc.id, ...doc.data() }))
@@ -783,18 +823,16 @@
           setAll(data);
         }, () => {});
       return () => unsub();
-    }, []);
+    }, [eventId]);
 
     const deleteParticipant = async (docId) => {
-      await participantsCol().doc(docId).delete().catch(() => {});
-      // onSnapshot will update state automatically
+      await db.collection('participants').doc(docId).delete().catch(() => {});
     };
 
     const updateParticipant = async (docId, updates) => {
       const { _docId, ...clean } = updates;
-      await participantsCol().doc(docId).update(clean).catch(() => {});
+      await db.collection('participants').doc(docId).update(clean).catch(() => {});
       setEditing(null);
-      // onSnapshot will update state automatically
     };
 
     const tabTitle = { overview:'Overview', participants:'Participants', analytics:'Analytics' };
@@ -803,7 +841,7 @@
     return (
       <div className="dash-app" style={{ display:'flex', height:'100vh', fontFamily:"'Plus Jakarta Sans', sans-serif" }}>
         {editing && <EditModal participant={editing} onSave={updateParticipant} onClose={() => setEditing(null)} />}
-        <Sidebar active={tab} onSelect={t=>{setTab(t);}} />
+        <Sidebar active={tab} onSelect={t=>{setTab(t);}} event={EVENT} eventId={eventId} onEventChange={setEventId} />
         <div className="dash-main" style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
           {/* Top bar */}
           <div className="dash-topbar" style={{ background:C.white, borderBottom:`1px solid ${C.border}`, padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:52, flexShrink:0 }}>

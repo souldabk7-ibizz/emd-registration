@@ -99,27 +99,6 @@
       date:  '15–16 June 2026',
       venue: 'Centara Grand Hotel, Bangkok',
     },
-    'event-2': {
-      label: 'Event 2',
-      name:  'Event 2',
-      short: 'Event 2',
-      date:  'TBD',
-      venue: 'TBD',
-    },
-    'event-3': {
-      label: 'Event 3',
-      name:  'Event 3',
-      short: 'Event 3',
-      date:  'TBD',
-      venue: 'TBD',
-    },
-    'event-4': {
-      label: 'Event 4',
-      name:  'Event 4',
-      short: 'Event 4',
-      date:  'TBD',
-      venue: 'TBD',
-    },
   };
   const DEFAULT_EVENT = 'emd-2026';
   const urlEventId = new URLSearchParams(location.search).get('event') || DEFAULT_EVENT;
@@ -874,9 +853,6 @@
               <div style={{ width:32, height:32, borderRadius:'50%', background:C.orange, color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700 }}>A</div>
             </div>
           </div>
-
-          {/* Event tab bar — visible all platforms */}
-          <EventTabBar eventId={eventId} onEventChange={setEventId} />
 
           {/* Page header */}
           <div style={{ background:C.white, padding:'12px 24px 10px', borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>

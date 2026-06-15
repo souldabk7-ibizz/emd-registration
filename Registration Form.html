@@ -65,7 +65,7 @@
 </template>
 
 <script type="text/babel">
-  const { useState } = React;
+  const { useState, useEffect } = React;
   const db = firebase.firestore();
 
   const EVENT_CONFIG = {
@@ -76,10 +76,11 @@
       date:  '15–16 June 2026',
       venue: 'Centara Grand Hotel, Bangkok',
     },
+    'event-2': { label:'Event 2', name:'Event 2', short:'Event 2', date:'TBD', venue:'TBD' },
+    'event-3': { label:'Event 3', name:'Event 3', short:'Event 3', date:'TBD', venue:'TBD' },
+    'event-4': { label:'Event 4', name:'Event 4', short:'Event 4', date:'TBD', venue:'TBD' },
   };
   const DEFAULT_EVENT = 'emd-2026';
-  const eventId = new URLSearchParams(location.search).get('event') || DEFAULT_EVENT;
-  const EVENT = EVENT_CONFIG[eventId] || EVENT_CONFIG[DEFAULT_EVENT];
   const participantsCol = db.collection('participants');
 
   const C = {
@@ -315,7 +316,7 @@
   }
 
   /* ── Step 4 ── */
-  function Step4({ d }) {
+  function Step4({ d, event }) {
     const bizLabel = BIZ_TYPES.find(b=>b.id===d.biz)?.label || '—';
     const intLabels = (d.interests||[]).map(id=>PRODUCTS.find(p=>p.id===id)?.label).filter(Boolean);
     const Row = ({k,v}) => (
@@ -342,9 +343,9 @@
           <Row k="Source" v={d.source||'—'} />
         </div>
         <div style={{ background:`${C.orange}12`, border:`1px solid ${C.orange}35`, borderRadius:10, padding:'12px 16px', fontSize:13, color:C.navy, lineHeight:1.7 }}>
-          <strong>Event:</strong> {EVENT.name} &nbsp;·&nbsp;
-          <strong>Date:</strong> {EVENT.date} &nbsp;·&nbsp;
-          <strong>Venue:</strong> {EVENT.venue}
+          <strong>Event:</strong> {event.name} &nbsp;·&nbsp;
+          <strong>Date:</strong> {event.date} &nbsp;·&nbsp;
+          <strong>Venue:</strong> {event.venue}
         </div>
         <p style={{ fontSize:12, color:C.muted, lineHeight:1.6 }}>
           By submitting this form, you consent to EMD contacting you with event updates and product information.
@@ -354,7 +355,7 @@
   }
 
   /* ── Success ── */
-  function Success({ d, regId }) {
+  function Success({ d, regId, event }) {
     return (
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', padding:'12px 0' }}>
         <div style={{ width:68, height:68, borderRadius:'50%', background:'#ECFDF5', border:`2.5px solid ${C.success}`, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:20 }}>
@@ -364,7 +365,7 @@
         </div>
         <h2 style={{ fontSize:26, fontWeight:800, color:C.navy, marginBottom:8 }}>Registration Successful!</h2>
         <p style={{ fontSize:14, color:C.muted, marginBottom:24, maxWidth:360 }}>
-          Thank you, <strong>{d.firstName}</strong>. We look forward to seeing you at {EVENT.name}.
+          Thank you, <strong>{d.firstName}</strong>. We look forward to seeing you at {event.name}.
         </p>
         <div style={{ background:C.navy, color:'white', borderRadius:12, padding:'14px 32px', marginBottom:24 }}>
           <div style={{ fontSize:11, opacity:.6, marginBottom:3, letterSpacing:1, textTransform:'uppercase' }}>Registration ID</div>
@@ -400,6 +401,17 @@
     const [err, setErr] = useState({});
     const [submitted, setSubmitted] = useState(false);
     const [regId, setRegId] = useState('');
+    const [activeEvent, setActiveEvent] = useState(undefined); // undefined = loading
+
+    useEffect(() => {
+      const unsub = db.collection('config').doc('control').onSnapshot(doc => {
+        const a = doc.exists ? doc.data().activeEvent : null;
+        setActiveEvent(EVENT_CONFIG[a] ? a : DEFAULT_EVENT);
+      }, () => setActiveEvent(DEFAULT_EVENT));
+      return () => unsub();
+    }, []);
+
+    const EVENT = activeEvent ? EVENT_CONFIG[activeEvent] : null;
 
     const validate = () => {
       const e = {};
@@ -422,7 +434,7 @@
       if (!validate()) return;
       if (step < 4) { setStep(s => s + 1); return; }
       const id = 'EMD-' + (10000 + Math.floor(Math.random() * 90000));
-      const p = { ...d, businessType: d.biz, id, eventId, registrationDate: new Date().toISOString(), status: 'confirmed' };
+      const p = { ...d, businessType: d.biz, id, eventId: activeEvent, registrationDate: new Date().toISOString(), status: 'confirmed' };
       try {
         await participantsCol.add(p);
       } catch(_) {}
@@ -438,12 +450,18 @@
       boxShadow:'0 2px 10px rgba(0,0,0,0.06)',
     };
 
+    if (activeEvent === undefined) return (
+      <div style={{ ...baseWrap, display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ fontSize:14, color:C.muted }}>Loading…</div>
+      </div>
+    );
+
     if (submitted) return (
       <div style={baseWrap}>
         <header style={header} className="rform-header"><Logo /></header>
         <main className="rform-main" style={{ display:'flex', justifyContent:'center', padding:'40px 20px 60px' }}>
           <div className="rform-card" style={{ background:C.white, borderRadius:16, maxWidth:540, width:'100%', padding:'40px', boxShadow:'0 4px 32px rgba(11,37,69,.09)' }}>
-            <Success d={d} regId={regId} />
+            <Success d={d} regId={regId} event={EVENT} />
           </div>
         </main>
       </div>
@@ -478,7 +496,7 @@
               {step === 1 && <Step1 d={d} set={setD} err={err} />}
               {step === 2 && <Step2 d={d} set={setD} err={err} />}
               {step === 3 && <Step3 d={d} set={setD} />}
-              {step === 4 && <Step4 d={d} />}
+              {step === 4 && <Step4 d={d} event={EVENT} />}
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:28, paddingTop:20, borderTop:`1px solid ${C.border}` }}>
               <button onClick={()=>{setStep(s=>s-1); setErr({});}}

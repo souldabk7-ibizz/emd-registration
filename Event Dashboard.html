@@ -99,6 +99,9 @@
       date:  '15–16 June 2026',
       venue: 'Centara Grand Hotel, Bangkok',
     },
+    'event-2': { label:'Event 2', name:'Event 2', short:'Event 2', date:'TBD', venue:'TBD' },
+    'event-3': { label:'Event 3', name:'Event 3', short:'Event 3', date:'TBD', venue:'TBD' },
+    'event-4': { label:'Event 4', name:'Event 4', short:'Event 4', date:'TBD', venue:'TBD' },
   };
   const DEFAULT_EVENT = 'emd-2026';
   const urlEventId = new URLSearchParams(location.search).get('event') || DEFAULT_EVENT;
@@ -771,22 +774,46 @@
   }
 
   /* ─────────────────── Event Tab Bar ─────────────────── */
-  function EventTabBar({ eventId, onEventChange }) {
+  function EventTabBar({ eventId, onEventChange, activeEvent, onSetActive }) {
+    const viewing = EVENT_CONFIG[eventId];
+    const activeCfg = EVENT_CONFIG[activeEvent];
+    const isViewingActive = eventId === activeEvent;
     return (
-      <div style={{ background:C.white, borderBottom:`1px solid ${C.border}`, display:'flex', overflowX:'auto', flexShrink:0, WebkitOverflowScrolling:'touch' }}>
-        {Object.entries(EVENT_CONFIG).map(([eid, ecfg]) => {
-          const on = eid === eventId;
-          return (
-            <button key={eid} onClick={() => onEventChange(eid)} style={{
-              padding:'10px 20px', border:'none', borderBottom:`3px solid ${on ? C.orange : 'transparent'}`,
-              background:'transparent', color: on ? C.navy : C.muted,
-              fontSize:12, fontWeight: on ? 700 : 400, cursor:'pointer',
-              whiteSpace:'nowrap', flexShrink:0, transition:'all .15s',
+      <div style={{ background:C.white, borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>
+        <div style={{ display:'flex', overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
+          {Object.entries(EVENT_CONFIG).map(([eid, ecfg]) => {
+            const on = eid === eventId;
+            const active = eid === activeEvent;
+            return (
+              <button key={eid} onClick={() => onEventChange(eid)} style={{
+                padding:'10px 18px', border:'none', borderBottom:`3px solid ${on ? C.orange : 'transparent'}`,
+                background:'transparent', color: on ? C.navy : C.muted,
+                fontSize:12, fontWeight: on ? 700 : 400, cursor:'pointer',
+                whiteSpace:'nowrap', flexShrink:0, transition:'all .15s',
+                display:'flex', alignItems:'center', gap:6,
+              }}>
+                {ecfg.label}
+                {active && <span title="Open for registration" style={{ width:7, height:7, borderRadius:'50%', background:'#10B981', display:'inline-block' }} />}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap', padding:'8px 16px', background:C.bg, borderTop:`1px solid ${C.border}` }}>
+          <span style={{ fontSize:12, color:C.navy }}>
+            <span style={{ width:8, height:8, borderRadius:'50%', background:'#10B981', display:'inline-block', marginRight:6 }} />
+            Open for registration: <strong>{activeCfg ? `${activeCfg.label} · ${activeCfg.name}` : '—'}</strong>
+          </span>
+          {isViewingActive ? (
+            <span style={{ fontSize:11, fontWeight:600, color:C.success }}>● This event is open</span>
+          ) : (
+            <button onClick={() => onSetActive(eventId)} style={{
+              padding:'6px 14px', borderRadius:7, border:'none', background:C.orange, color:'white',
+              fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
             }}>
-              {ecfg.label}
+              Open registration for {viewing?.label}
             </button>
-          );
-        })}
+          )}
+        </div>
       </div>
     );
   }
@@ -797,8 +824,21 @@
     const [all, setAll] = useState([]);
     const [editing, setEditing] = useState(null);
     const [eventId, setEventId] = useState(urlEventId);
+    const [activeEvent, setActiveEvent] = useState(null);
 
     const EVENT = EVENT_CONFIG[eventId] || EVENT_CONFIG[DEFAULT_EVENT];
+
+    useEffect(() => {
+      const unsub = db.collection('config').doc('control').onSnapshot(doc => {
+        const a = doc.exists ? doc.data().activeEvent : null;
+        setActiveEvent(EVENT_CONFIG[a] ? a : DEFAULT_EVENT);
+      }, () => setActiveEvent(DEFAULT_EVENT));
+      return () => unsub();
+    }, []);
+
+    const setActive = async (eid) => {
+      await db.collection('config').doc('control').set({ activeEvent: eid }, { merge: true }).catch(() => {});
+    };
 
     useEffect(() => {
       setAll([]);
@@ -853,6 +893,9 @@
               <div style={{ width:32, height:32, borderRadius:'50%', background:C.orange, color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700 }}>A</div>
             </div>
           </div>
+
+          {/* Event tab bar — visible all platforms */}
+          <EventTabBar eventId={eventId} onEventChange={setEventId} activeEvent={activeEvent} onSetActive={setActive} />
 
           {/* Page header */}
           <div style={{ background:C.white, padding:'12px 24px 10px', borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>

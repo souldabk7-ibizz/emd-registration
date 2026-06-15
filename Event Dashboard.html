@@ -264,7 +264,7 @@
     { id:'register',      icon:'M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z', label:'Register', href:'Registration Form.html' },
   ];
 
-  function Sidebar({ active, onSelect, event, eventId, onEventChange }) {
+  function Sidebar({ active, onSelect, event }) {
     const regFormUrl = new URL('Registration%20Form.html', window.location.href).href;
     return (
       <aside className="dash-sidebar" style={{ width:220, background:C.navy, height:'100vh', display:'flex', flexDirection:'column', flexShrink:0 }}>
@@ -276,21 +276,6 @@
             {event.short}<br/>
             <span style={{ color:'rgba(255,255,255,.3)' }}>{new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span>
           </div>
-        </div>
-        {/* Event switcher */}
-        <div style={{ padding:'8px 10px', borderBottom:`1px solid rgba(255,255,255,.08)` }}>
-          <div style={{ fontSize:9, color:'rgba(255,255,255,.3)', textTransform:'uppercase', letterSpacing:1, marginBottom:6, paddingLeft:4 }}>Events</div>
-          {Object.entries(EVENT_CONFIG).map(([eid, ecfg]) => (
-            <button key={eid} onClick={() => onEventChange(eid)}
-              style={{ display:'block', width:'100%', padding:'6px 10px', borderRadius:6, border:'none', marginBottom:2,
-                background: eid === eventId ? 'rgba(255,255,255,.12)' : 'transparent',
-                color: eid === eventId ? 'white' : 'rgba(255,255,255,.45)',
-                fontSize:11, cursor:'pointer', textAlign:'left', transition:'all .15s',
-                borderLeft: `2px solid ${eid === eventId ? C.orange : 'transparent'}` }}>
-              <span style={{ fontWeight:700 }}>{ecfg.label}</span>
-              {ecfg.venue !== 'TBD' && <span style={{ display:'block', fontSize:9, opacity:.6, marginTop:1 }}>{ecfg.venue}</span>}
-            </button>
-          ))}
         </div>
         <nav className="dash-sidebar-nav" style={{ padding:'12px 10px', flex:1, display:'flex', flexDirection:'column' }}>
           {NAV.map(n => {
@@ -803,6 +788,27 @@
     );
   }
 
+  /* ─────────────────── Event Tab Bar ─────────────────── */
+  function EventTabBar({ eventId, onEventChange }) {
+    return (
+      <div style={{ background:C.white, borderBottom:`1px solid ${C.border}`, display:'flex', overflowX:'auto', flexShrink:0, WebkitOverflowScrolling:'touch' }}>
+        {Object.entries(EVENT_CONFIG).map(([eid, ecfg]) => {
+          const on = eid === eventId;
+          return (
+            <button key={eid} onClick={() => onEventChange(eid)} style={{
+              padding:'10px 20px', border:'none', borderBottom:`3px solid ${on ? C.orange : 'transparent'}`,
+              background:'transparent', color: on ? C.navy : C.muted,
+              fontSize:12, fontWeight: on ? 700 : 400, cursor:'pointer',
+              whiteSpace:'nowrap', flexShrink:0, transition:'all .15s',
+            }}>
+              {ecfg.label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   /* ─────────────────── App ─────────────────── */
   function App() {
     const [tab, setTab] = useState('overview');
@@ -841,7 +847,7 @@
     return (
       <div className="dash-app" style={{ display:'flex', height:'100vh', fontFamily:"'Plus Jakarta Sans', sans-serif" }}>
         {editing && <EditModal participant={editing} onSave={updateParticipant} onClose={() => setEditing(null)} />}
-        <Sidebar active={tab} onSelect={t=>{setTab(t);}} event={EVENT} eventId={eventId} onEventChange={setEventId} />
+        <Sidebar active={tab} onSelect={t=>{setTab(t);}} event={EVENT} />
         <div className="dash-main" style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
           {/* Top bar */}
           <div className="dash-topbar" style={{ background:C.white, borderBottom:`1px solid ${C.border}`, padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:52, flexShrink:0 }}>
@@ -866,10 +872,13 @@
             </div>
           </div>
 
+          {/* Event tab bar — visible all platforms */}
+          <EventTabBar eventId={eventId} onEventChange={setEventId} />
+
           {/* Page header */}
-          <div style={{ background:C.white, padding:'16px 24px 14px', borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>
-            <h1 style={{ fontSize:20, fontWeight:800, color:C.navy }}>{tabTitle[tab]}</h1>
-            <p style={{ fontSize:12, color:C.muted, marginTop:2 }}>{EVENT.name}</p>
+          <div style={{ background:C.white, padding:'12px 24px 10px', borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>
+            <h1 style={{ fontSize:18, fontWeight:800, color:C.navy }}>{tabTitle[tab]}</h1>
+            <p style={{ fontSize:11, color:C.muted, marginTop:1 }}>{EVENT.name}</p>
           </div>
 
           {/* Content */}

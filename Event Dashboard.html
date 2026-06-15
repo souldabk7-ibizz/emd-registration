@@ -829,7 +829,7 @@
     const EVENT = EVENT_CONFIG[eventId] || EVENT_CONFIG[DEFAULT_EVENT];
 
     useEffect(() => {
-      const unsub = db.collection('config').doc('control').onSnapshot(doc => {
+      const unsub = db.collection('participants').doc('_eventControl').onSnapshot(doc => {
         const a = doc.exists ? doc.data().activeEvent : null;
         setActiveEvent(EVENT_CONFIG[a] ? a : DEFAULT_EVENT);
       }, () => setActiveEvent(DEFAULT_EVENT));
@@ -837,7 +837,7 @@
     }, []);
 
     const setActive = async (eid) => {
-      await db.collection('config').doc('control').set({ activeEvent: eid }, { merge: true }).catch(() => {});
+      await db.collection('participants').doc('_eventControl').set({ activeEvent: eid }, { merge: true }).catch(() => {});
     };
 
     useEffect(() => {

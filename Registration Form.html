@@ -404,7 +404,7 @@
     const [activeEvent, setActiveEvent] = useState(undefined); // undefined = loading
 
     useEffect(() => {
-      const unsub = db.collection('config').doc('control').onSnapshot(doc => {
+      const unsub = db.collection('participants').doc('_eventControl').onSnapshot(doc => {
         const a = doc.exists ? doc.data().activeEvent : null;
         setActiveEvent(EVENT_CONFIG[a] ? a : DEFAULT_EVENT);
       }, () => setActiveEvent(DEFAULT_EVENT));

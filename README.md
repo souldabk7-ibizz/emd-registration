@@ -115,10 +115,40 @@ const EVENT_CONFIG = {
 
 ---
 
-## Firestore Security Rules
+## Security
+
+### Firebase API Key — ไม่ใช่ Secret จริงๆ
+
+`firebase-config.js` มี API key ที่มองเห็นใน repo — **นี่คือ design ของ Firebase**  
+API key ทำหน้าที่แค่ "บอกว่าจะเชื่อมต่อ project ไหน" ไม่ใช่ password  
+Security จริงอยู่ที่ Firestore Rules + HTTP Referrer Restriction (ดูด้านล่าง)
+
+> อ้างอิง: [Firebase docs — API key safe to include in client code](https://firebase.google.com/docs/projects/api-keys)
+
+---
+
+### ✅ HTTP Referrer Restriction (แนะนำทำ)
+
+ล็อค API key ให้ใช้ได้เฉพาะจาก domain ของเราเท่านั้น:
+
+1. ไป [console.cloud.google.com](https://console.cloud.google.com) → project `emd-showcase-2026`
+2. **APIs & Services** → **Credentials** → แก้ไข API key
+3. Application restrictions → เลือก **HTTP referrers (websites)**
+4. เพิ่ม:
+   ```
+   https://souldabk7-ibizz.github.io/*
+   http://localhost:8123/*
+   ```
+5. Save
+
+หลังจากนี้ ถ้าใครเอา API key ไปใช้ที่ domain อื่น = ถูก block อัตโนมัติ
+
+---
+
+### Firestore Security Rules
 
 ปัจจุบัน rules เปิดแค่ collection `participants` (read/write)  
-Collection อื่น (`config` ฯลฯ) ถูก block โดย default
+Collection อื่น ถูก block โดย default
 
 ```
 rules_version = '2';
@@ -131,7 +161,8 @@ service cloud.firestore {
 }
 ```
 
-> หากต้องการ restrict ในอนาคต → เพิ่ม auth check ใน rules
+> Dashboard ต้องอ่านข้อมูลได้ จึงยังคง `read: true` ไว้ก่อน  
+> ถ้าต้องการล็อค Dashboard ในอนาคต → เพิ่ม Firebase Authentication
 
 ---
 

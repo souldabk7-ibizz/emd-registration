@@ -8,7 +8,7 @@
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
@@ -165,6 +165,35 @@
       {wch:28},{wch:16},{wch:26},{wch:12},
       {wch:26},{wch:38},{wch:26},{wch:14},{wch:10},{wch:12},
     ];
+
+    // ── Modern styling (xlsx-js-style) ──
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    const border = { style:'thin', color:{ rgb:'D8E0DB' } };
+    const allBorders = { top:border, bottom:border, left:border, right:border };
+    for (let r = range.s.r; r <= range.e.r; r++) {
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const cell = ws[XLSX.utils.encode_cell({ r, c })];
+        if (!cell) continue;
+        if (r === 0) {
+          cell.s = {
+            font: { bold:true, color:{ rgb:'FFFFFF' }, sz:11, name:'Calibri' },
+            fill: { fgColor:{ rgb:'0D2818' } },
+            alignment: { horizontal:'center', vertical:'center', wrapText:true },
+            border: allBorders,
+          };
+        } else {
+          cell.s = {
+            font: { sz:10, color:{ rgb:'1E293B' }, name:'Calibri' },
+            fill: { fgColor:{ rgb: r % 2 === 0 ? 'F4F7F5' : 'FFFFFF' } },
+            alignment: { vertical:'center' },
+            border: allBorders,
+          };
+        }
+      }
+    }
+    ws['!rows'] = [{ hpt:26 }];               // taller header row
+    ws['!autofilter'] = { ref: ws['!ref'] };  // filter dropdowns
+    // ponytail: no freeze-header — xlsx-js-style write path doesn't serialize !freeze. autofilter covers the "scannable header" need.
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Participants');

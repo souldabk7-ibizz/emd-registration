@@ -399,11 +399,13 @@
     const [activeEvent, setActiveEvent] = useState(undefined); // undefined = loading
 
     useEffect(() => {
+      const fallback = setTimeout(() => setActiveEvent(DEFAULT_EVENT), 3000);
       const unsub = db.collection('participants').doc('_eventControl').onSnapshot(doc => {
+        clearTimeout(fallback);
         const a = doc.exists ? doc.data().activeEvent : null;
         setActiveEvent(EVENT_CONFIG[a] ? a : DEFAULT_EVENT);
-      }, () => setActiveEvent(DEFAULT_EVENT));
-      return () => unsub();
+      }, () => { clearTimeout(fallback); setActiveEvent(DEFAULT_EVENT); });
+      return () => { unsub(); clearTimeout(fallback); };
     }, []);
 
     const EVENT = activeEvent ? EVENT_CONFIG[activeEvent] : null;

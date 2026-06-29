@@ -957,6 +957,7 @@
     const [activeEvent, setActiveEvent] = useState(null);
     const [toasts, setToasts] = useState([]);
     const isInitialLoad = useRef(true);
+    const didSyncEvent = useRef(false);
 
     const addToast = (name, company) => {
       const id = Date.now();
@@ -982,7 +983,12 @@
     useEffect(() => {
       const unsub = db.collection('participants').doc('_eventControl').onSnapshot(doc => {
         const a = doc.exists ? doc.data().activeEvent : null;
-        setActiveEvent(EVENT_CONFIG[a] ? a : DEFAULT_EVENT);
+        const resolved = EVENT_CONFIG[a] ? a : DEFAULT_EVENT;
+        setActiveEvent(resolved);
+        if (!didSyncEvent.current) {
+          didSyncEvent.current = true;
+          setEventId(resolved);
+        }
       }, () => setActiveEvent(DEFAULT_EVENT));
       return () => unsub();
     }, []);

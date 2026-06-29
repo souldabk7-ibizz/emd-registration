@@ -26,7 +26,7 @@
     @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
     .fade-up { animation: fadeUp 0.3s ease forwards; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes toastIn { from { opacity:0; transform:translateX(80px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastIn { 0%{opacity:0;transform:translateX(120px) scale(0.85)} 60%{transform:translateX(-8px) scale(1.02)} 100%{opacity:1;transform:translateX(0) scale(1)} }
 
     /* ── Dashboard Responsive — iPad (601–900px): horizontal top nav ── */
     @media (min-width: 601px) and (max-width: 900px) {
@@ -918,15 +918,30 @@
   function Toast({ toasts }) {
     if (!toasts.length) return null;
     return (
-      <div style={{ position:'fixed', bottom:24, right:24, display:'flex', flexDirection:'column', gap:10, zIndex:9999, pointerEvents:'none' }}>
+      <div style={{ position:'fixed', bottom:28, right:28, display:'flex', flexDirection:'column', gap:12, zIndex:9999, pointerEvents:'none' }}>
         {toasts.map(t => (
-          <div key={t.id} style={{ background:C.navy, color:'white', padding:'14px 18px', borderRadius:12, fontSize:13, fontWeight:600, boxShadow:'0 6px 24px rgba(0,0,0,0.22)', display:'flex', alignItems:'flex-start', gap:12, animation:'toastIn 0.3s ease', minWidth:260, maxWidth:320 }}>
-            <span style={{ fontSize:20, lineHeight:1, flexShrink:0 }}>🔔</span>
-            <div>
-              <div style={{ fontSize:10, fontWeight:500, opacity:.55, letterSpacing:.6, textTransform:'uppercase', marginBottom:3 }}>ผู้ลงทะเบียนใหม่</div>
-              <div>{t.name}</div>
-              {t.company && <div style={{ fontSize:11, opacity:.65, fontWeight:400, marginTop:2 }}>{t.company}</div>}
+          <div key={t.id} style={{
+            background:'#fff', borderRadius:14, padding:'16px 18px 16px 0',
+            boxShadow:'0 12px 48px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.10)',
+            display:'flex', alignItems:'stretch', gap:0,
+            animation:'toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+            minWidth:300, maxWidth:360, overflow:'hidden',
+            border:'1px solid #e2ede8',
+          }}>
+            {/* accent bar */}
+            <div style={{ width:5, background:C.orange, flexShrink:0, borderRadius:'14px 0 0 14px', marginRight:14 }} />
+            {/* bell circle */}
+            <div style={{ width:44, height:44, borderRadius:'50%', background:`${C.orange}18`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, alignSelf:'center', marginRight:14 }}>
+              <span style={{ fontSize:22 }}>🔔</span>
             </div>
+            {/* text */}
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:10, fontWeight:800, color:C.orange, letterSpacing:1, textTransform:'uppercase', marginBottom:4 }}>ผู้ลงทะเบียนใหม่</div>
+              <div style={{ fontSize:15, fontWeight:700, color:C.navy, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{t.name}</div>
+              {t.company && <div style={{ fontSize:12, color:C.muted, marginTop:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{t.company}</div>}
+            </div>
+            {/* live dot */}
+            <div style={{ width:10, height:10, borderRadius:'50%', background:'#10B981', flexShrink:0, alignSelf:'flex-start', marginTop:4, boxShadow:'0 0 0 3px rgba(16,185,129,.25)' }} />
           </div>
         ))}
       </div>
@@ -946,7 +961,20 @@
     const addToast = (name, company) => {
       const id = Date.now();
       setToasts(prev => [...prev, { id, name, company }]);
-      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 6000);
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [880, 1047, 1319].forEach((freq, i) => {
+          const osc = ctx.createOscillator(); const g = ctx.createGain();
+          osc.connect(g); g.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          g.gain.setValueAtTime(0.18, ctx.currentTime + i*0.12);
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.12 + 0.25);
+          osc.start(ctx.currentTime + i*0.12);
+          osc.stop(ctx.currentTime + i*0.12 + 0.25);
+        });
+      } catch(_) {}
     };
 
     const EVENT = EVENT_CONFIG[eventId] || EVENT_CONFIG[DEFAULT_EVENT];

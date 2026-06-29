@@ -137,6 +137,7 @@
       successId: 'รหัสลงทะเบียน',
       successEmail: em => `ข้อมูลยืนยันจะถูกส่งไปที่ ${em}`,
       registerAnother: 'ลงทะเบียนอีกคน',
+      closePage: 'ปิดหน้านี้',
     },
     en: {
       loading: 'Loading…',
@@ -174,6 +175,7 @@
       successId: 'Registration ID',
       successEmail: em => `A confirmation will be sent to ${em}`,
       registerAnother: 'Register Another Person',
+      closePage: 'Close',
     },
   };
 
@@ -361,8 +363,11 @@
                   {on && <svg width="11" height="9" viewBox="0 0 11 9"><path d="M1 4.5l3 3 6-7" stroke="white" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </div>
                 <div>
-                  <div style={{ fontSize:14, fontWeight:on?600:500, color:C.navy }}>{p[lang]}</div>
-                  <div style={{ fontSize:12, color:C.muted, marginTop:1 }}>{p[lang + 'Desc']}</div>
+                  <div style={{ fontSize:14, fontWeight:on?600:500, color:C.navy }}>
+                    {p[lang]}
+                    {lang==='th' && <span style={{ fontSize:11, fontWeight:400, color:C.muted, marginLeft:6 }}>({p.en})</span>}
+                  </div>
+                  <div style={{ fontSize:12, color:C.muted, marginTop:1 }}>{p[lang+'Desc']}</div>
                 </div>
               </label>
             );
@@ -428,9 +433,9 @@
         <p style={{ fontSize:13, color:C.muted, marginBottom:32 }}>
           {t.successEmail(d.email)}
         </p>
-        <button onClick={()=>window.location.reload()}
+        <button onClick={()=>window.close()}
           style={{ display:'inline-flex', alignItems:'center', gap:8, background:C.orange, color:'white', padding:'12px 28px', borderRadius:8, fontWeight:700, fontSize:14, border:'none', cursor:'pointer' }}>
-          {t.registerAnother}
+          {t.closePage}
         </button>
       </div>
     );

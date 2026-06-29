@@ -138,6 +138,7 @@
       successEmail: em => `ข้อมูลยืนยันจะถูกส่งไปที่ ${em}`,
       registerAnother: 'ลงทะเบียนอีกคน',
       closePage: 'ปิดหน้านี้',
+      closeManual: 'กรุณาปิด tab นี้ด้วยตัวเอง',
     },
     en: {
       loading: 'Loading…',
@@ -176,6 +177,7 @@
       successEmail: em => `A confirmation will be sent to ${em}`,
       registerAnother: 'Register Another Person',
       closePage: 'Close',
+      closeManual: 'Please close this tab manually',
     },
   };
 
@@ -415,6 +417,12 @@
 
   /* ── Success ── */
   function Success({ d, regId, event, t }) {
+    const [showManual, setShowManual] = useState(false);
+    const handleClose = () => {
+      window.close();
+      // ponytail: browsers block close() on tabs not opened by script; show fallback
+      setTimeout(() => setShowManual(true), 400);
+    };
     return (
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', padding:'12px 0' }}>
         <div style={{ width:68, height:68, borderRadius:'50%', background:'#ECFDF5', border:`2.5px solid ${C.success}`, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:20 }}>
@@ -433,10 +441,14 @@
         <p style={{ fontSize:13, color:C.muted, marginBottom:32 }}>
           {t.successEmail(d.email)}
         </p>
-        <button onClick={()=>window.close()}
-          style={{ display:'inline-flex', alignItems:'center', gap:8, background:C.orange, color:'white', padding:'12px 28px', borderRadius:8, fontWeight:700, fontSize:14, border:'none', cursor:'pointer' }}>
-          {t.closePage}
-        </button>
+        {showManual ? (
+          <p style={{ fontSize:14, color:C.muted, fontWeight:600 }}>{t.closeManual}</p>
+        ) : (
+          <button onClick={handleClose}
+            style={{ display:'inline-flex', alignItems:'center', gap:8, background:C.orange, color:'white', padding:'12px 28px', borderRadius:8, fontWeight:700, fontSize:14, border:'none', cursor:'pointer' }}>
+            {t.closePage}
+          </button>
+        )}
       </div>
     );
   }

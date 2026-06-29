@@ -52,17 +52,6 @@
 </head>
 <body>
 <div id="root"></div>
-<template id="__bundler_thumbnail">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-    <rect width="100" height="100" fill="#00843D"/>
-    <rect x="30" y="20" width="40" height="50" rx="4" fill="white" opacity="0.9"/>
-    <rect x="36" y="30" width="28" height="3" rx="1.5" fill="#00843D"/>
-    <rect x="36" y="37" width="22" height="3" rx="1.5" fill="#00843D" opacity="0.5"/>
-    <rect x="36" y="44" width="28" height="3" rx="1.5" fill="#00843D"/>
-    <rect x="36" y="51" width="18" height="3" rx="1.5" fill="#00843D" opacity="0.5"/>
-    <rect x="36" y="58" width="28" height="8" rx="2" fill="#00843D"/>
-  </svg>
-</template>
 
 <script type="text/babel">
   const { useState, useEffect } = React;
@@ -91,26 +80,102 @@
   };
 
   const BIZ_TYPES = [
-    { id: 'petrochemical', label: 'Petrochemical, Oil & Gas' },
-    { id: 'mining',        label: 'Mining' },
-    { id: 'power',         label: 'Power Plant' },
-    { id: 'food',          label: 'Food & Beverage' },
-    { id: 'government',    label: 'Government' },
-    { id: 'electronics',   label: 'Electronics & Clean Room' },
-    { id: 'cement',        label: 'Cement' },
-    { id: 'pulp',          label: 'Pulp & Paper' },
-    { id: 'other',         label: 'Other' },
+    { id: 'petrochemical', en: 'Petrochemical, Oil & Gas',   th: 'ปิโตรเคมี น้ำมัน และก๊าซ' },
+    { id: 'mining',        en: 'Mining',                      th: 'เหมืองแร่' },
+    { id: 'power',         en: 'Power Plant',                 th: 'โรงไฟฟ้า' },
+    { id: 'food',          en: 'Food & Beverage',             th: 'อาหารและเครื่องดื่ม' },
+    { id: 'government',    en: 'Government',                  th: 'หน่วยงานรัฐบาล' },
+    { id: 'electronics',   en: 'Electronics & Clean Room',    th: 'อิเล็กทรอนิกส์และห้องสะอาด' },
+    { id: 'cement',        en: 'Cement',                      th: 'ซีเมนต์' },
+    { id: 'pulp',          en: 'Pulp & Paper',                th: 'เยื่อกระดาษและกระดาษ' },
+    { id: 'other',         en: 'Other',                       th: 'อื่นๆ' },
   ];
 
   const PRODUCTS = [
-    { id: 'motors',     label: 'Electric Motors',                  desc: 'High-efficiency AC/DC motors' },
-    { id: 'drives',     label: 'Variable Speed Drives',            desc: 'Inverters & frequency converters' },
-    { id: 'mechanical', label: 'Mechanical & Industrial Fans',     desc: 'Turbines, compressors, centrifugal fans' },
-    { id: 'fiber',      label: 'Fiber Optic Sensing',              desc: 'DTS/DAS monitoring solutions' },
+    { id: 'motors',     en: 'Electric Motors',              enDesc: 'High-efficiency AC/DC motors',            th: 'มอเตอร์ไฟฟ้า',                  thDesc: 'มอเตอร์ AC/DC ประสิทธิภาพสูง' },
+    { id: 'drives',     en: 'Variable Speed Drives',        enDesc: 'Inverters & frequency converters',        th: 'ชุดควบคุมความเร็ว',              thDesc: 'อินเวอร์เตอร์และตัวแปลงความถี่' },
+    { id: 'mechanical', en: 'Mechanical & Industrial Fans', enDesc: 'Turbines, compressors, centrifugal fans', th: 'พัดลมและเครื่องจักรกล',           thDesc: 'กังหัน คอมเพรสเซอร์ พัดลมแบบแรงเหวี่ยง' },
+    { id: 'fiber',      en: 'Fiber Optic Sensing',          enDesc: 'DTS/DAS monitoring solutions',            th: 'ระบบเซ็นเซอร์ไฟเบอร์ออปติก',     thDesc: 'ระบบติดตาม DTS/DAS' },
   ];
 
   const COUNTRIES = ['Thailand','Myanmar','Cambodia','Vietnam','Malaysia','Indonesia','Singapore','Philippines','Other'];
-  const SOURCES = ['EMD Email Newsletter','Industry Association','Colleague / Word of Mouth','LinkedIn','Google Search','Other'];
+
+  const LANG = {
+    th: {
+      loading: 'กำลังโหลด…',
+      openFor: 'เปิดรับลงทะเบียน',
+      nowOpen: 'เปิดรับอยู่:',
+      heroTitle: 'ลงทะเบียนเข้าร่วมงาน',
+      heroSub: 'กรอกแบบฟอร์มด้านล่างเพื่อยืนยันที่นั่งของคุณที่',
+      steps: ['ข้อมูลส่วนตัว', 'บริษัท', 'ความสนใจ', 'ยืนยัน'],
+      stepOf: s => `ขั้นตอน ${s} จาก 4`,
+      back: '← ย้อนกลับ',
+      next: 'ถัดไป →',
+      submit: 'ยืนยันการลงทะเบียน ✓',
+      langBtn: 'EN',
+      s1Title: 'ข้อมูลติดต่อ',
+      s1Sub: 'กรุณากรอกข้อมูลส่วนตัวของคุณ',
+      prefix: 'คำนำหน้า', firstName: 'ชื่อ', lastName: 'นามสกุล',
+      jobTitle: 'ตำแหน่งงาน', email: 'อีเมล', phone: 'เบอร์โทรศัพท์',
+      phFirst: 'ชื่อ', phLast: 'นามสกุล',
+      phTitle: 'เช่น วิศวกรซ่อมบำรุง, ผู้จัดการโรงงาน',
+      phEmail: 'name@company.co.th', phPhone: '+66 XX XXX XXXX',
+      errFirst: 'กรุณากรอกชื่อ', errLast: 'กรุณากรอกนามสกุล',
+      errTitle: 'กรุณากรอกตำแหน่งงาน', errEmail: 'กรุณากรอกอีเมลที่ถูกต้อง', errPhone: 'กรุณากรอกเบอร์โทรศัพท์',
+      s2Title: 'ข้อมูลองค์กร', s2Sub: 'บอกเราเกี่ยวกับบริษัทของคุณ',
+      company: 'บริษัท / องค์กร', country: 'ประเทศ', industry: 'ประเภทธุรกิจ',
+      phCompany: 'ชื่อบริษัท',
+      errCompany: 'กรุณากรอกชื่อบริษัท', errBiz: 'กรุณาเลือกประเภทธุรกิจ',
+      s3Title: 'ความสนใจ', s3Sub: 'เลือกผลิตภัณฑ์ที่คุณต้องการเรียนรู้',
+      s4Title: 'ตรวจสอบและยืนยัน', s4Sub: 'กรุณาตรวจสอบข้อมูลก่อนส่ง',
+      rowName: 'ชื่อ-นามสกุล', rowJob: 'ตำแหน่ง', rowEmail: 'อีเมล', rowPhone: 'โทรศัพท์',
+      rowCompany: 'บริษัท', rowCountry: 'ประเทศ', rowIndustry: 'ประเภทธุรกิจ', rowInterests: 'สินค้าที่สนใจ',
+      consent: 'การส่งแบบฟอร์มนี้ถือว่าคุณยินยอมให้ EMD ติดต่อคุณเกี่ยวกับข่าวสารงานและข้อมูลผลิตภัณฑ์',
+      lblEvent: 'งาน', lblDate: 'วันที่', lblVenue: 'สถานที่',
+      successTitle: 'ลงทะเบียนสำเร็จ!',
+      successThanks: (n, ev) => `ขอบคุณ ${n} เราหวังว่าจะได้พบคุณที่งาน ${ev}`,
+      successId: 'รหัสลงทะเบียน',
+      successEmail: em => `ข้อมูลยืนยันจะถูกส่งไปที่ ${em}`,
+      registerAnother: 'ลงทะเบียนอีกคน',
+    },
+    en: {
+      loading: 'Loading…',
+      openFor: 'Open for registration',
+      nowOpen: 'Now open:',
+      heroTitle: 'Event Registration',
+      heroSub: 'Complete the form below to secure your place at',
+      steps: ['Contact', 'Company', 'Interests', 'Confirm'],
+      stepOf: s => `Step ${s} of 4`,
+      back: '← Back',
+      next: 'Continue →',
+      submit: 'Submit Registration ✓',
+      langBtn: 'ไทย',
+      s1Title: 'Contact Information',
+      s1Sub: 'Please provide your personal details',
+      prefix: 'Prefix', firstName: 'First Name', lastName: 'Last Name',
+      jobTitle: 'Job Title / Position', email: 'Email Address', phone: 'Phone Number',
+      phFirst: 'First name', phLast: 'Last name',
+      phTitle: 'e.g. Maintenance Engineer, Plant Manager',
+      phEmail: 'name@company.co.th', phPhone: '+66 XX XXX XXXX',
+      errFirst: 'First name is required', errLast: 'Last name is required',
+      errTitle: 'Job title is required', errEmail: 'Valid email required', errPhone: 'Phone number is required',
+      s2Title: 'Organization Details', s2Sub: 'Tell us about your company',
+      company: 'Company / Organization', country: 'Country', industry: 'Business Industry',
+      phCompany: 'Company name',
+      errCompany: 'Company name is required', errBiz: 'Please select your business industry',
+      s3Title: 'Areas of Interest', s3Sub: "Select all products you'd like to learn about",
+      s4Title: 'Review & Confirm', s4Sub: 'Please verify your information before submitting',
+      rowName: 'Full Name', rowJob: 'Job Title', rowEmail: 'Email', rowPhone: 'Phone',
+      rowCompany: 'Company', rowCountry: 'Country', rowIndustry: 'Industry', rowInterests: 'Interests',
+      consent: 'By submitting this form, you consent to EMD contacting you with event updates and product information.',
+      lblEvent: 'Event', lblDate: 'Date', lblVenue: 'Venue',
+      successTitle: 'Registration Successful!',
+      successThanks: (n, ev) => `Thank you, ${n}. We look forward to seeing you at ${ev}.`,
+      successId: 'Registration ID',
+      successEmail: em => `A confirmation will be sent to ${em}`,
+      registerAnother: 'Register Another Person',
+    },
+  };
 
   /* ── Logo ── */
   function Logo({ light }) {
@@ -136,11 +201,10 @@
   }
 
   /* ── Step Bar ── */
-  const STEPS = ['Contact','Company','Interests','Confirm'];
-  function StepBar({ current }) {
+  function StepBar({ current, t }) {
     return (
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'center', marginBottom:32 }}>
-        {STEPS.map((label, i) => {
+        {t.steps.map((label, i) => {
           const n = i + 1, done = n < current, active = n === current;
           return (
             <React.Fragment key={n}>
@@ -156,11 +220,11 @@
                     ? <svg width="14" height="11" viewBox="0 0 14 11"><path d="M1 5.5l4 4 8-8" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     : n}
                 </div>
-                <span style={{ fontSize:11, fontWeight: active?600:400, color: active?C.orange:C.muted, whiteSpace:'nowrap' }}>
+                <span className="step-label" style={{ fontSize:11, fontWeight: active?600:400, color: active?C.orange:C.muted, whiteSpace:'nowrap' }}>
                   {label}
                 </span>
               </div>
-              {i < STEPS.length - 1 && (
+              {i < t.steps.length - 1 && (
                 <div style={{ height:2, width:52, marginTop:16, flexShrink:0,
                   background: done ? C.orange : C.border, transition:'background .3s' }} />
               )}
@@ -172,7 +236,7 @@
   }
 
   /* ── Field ── */
-  function Field({ label, required, error, children, half }) {
+  function Field({ label, required, error, children }) {
     return (
       <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
         <label style={{ fontSize:13, fontWeight:600, color: C.navy }}>
@@ -193,36 +257,36 @@
   });
 
   /* ── Step 1 ── */
-  function Step1({ d, set, err }) {
+  function Step1({ d, set, err, t }) {
     const u = k => e => set({ ...d, [k]: e.target.value });
     return (
       <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
         <div>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.navy }}>Contact Information</h2>
-          <p style={{ fontSize:13, color:C.muted, marginTop:4 }}>Please provide your personal details</p>
+          <h2 style={{ fontSize:22, fontWeight:700, color:C.navy }}>{t.s1Title}</h2>
+          <p style={{ fontSize:13, color:C.muted, marginTop:4 }}>{t.s1Sub}</p>
         </div>
         <div className="g-name" style={{ display:'grid', gridTemplateColumns:'100px 1fr 1fr', gap:12 }}>
-          <Field label="Prefix">
+          <Field label={t.prefix}>
             <select value={d.prefix} onChange={u('prefix')} style={inp()}>
               {['Mr.','Ms.','Dr.','Eng.'].map(v=><option key={v}>{v}</option>)}
             </select>
           </Field>
-          <Field label="First Name" required error={err.firstName}>
-            <input value={d.firstName} onChange={u('firstName')} placeholder="First name" style={inp(err.firstName)} />
+          <Field label={t.firstName} required error={err.firstName}>
+            <input value={d.firstName} onChange={u('firstName')} placeholder={t.phFirst} style={inp(err.firstName)} />
           </Field>
-          <Field label="Last Name" required error={err.lastName}>
-            <input value={d.lastName} onChange={u('lastName')} placeholder="Last name" style={inp(err.lastName)} />
+          <Field label={t.lastName} required error={err.lastName}>
+            <input value={d.lastName} onChange={u('lastName')} placeholder={t.phLast} style={inp(err.lastName)} />
           </Field>
         </div>
-        <Field label="Job Title / Position" required error={err.title}>
-          <input value={d.title} onChange={u('title')} placeholder="e.g. Maintenance Engineer, Plant Manager" style={inp(err.title)} />
+        <Field label={t.jobTitle} required error={err.title}>
+          <input value={d.title} onChange={u('title')} placeholder={t.phTitle} style={inp(err.title)} />
         </Field>
         <div className="g-half" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-          <Field label="Email Address" required error={err.email}>
-            <input type="email" value={d.email} onChange={u('email')} placeholder="name@company.co.th" style={inp(err.email)} />
+          <Field label={t.email} required error={err.email}>
+            <input type="email" value={d.email} onChange={u('email')} placeholder={t.phEmail} style={inp(err.email)} />
           </Field>
-          <Field label="Phone Number" required error={err.phone}>
-            <input value={d.phone} onChange={u('phone')} placeholder="+66 XX XXX XXXX" style={inp(err.phone)} />
+          <Field label={t.phone} required error={err.phone}>
+            <input value={d.phone} onChange={u('phone')} placeholder={t.phPhone} style={inp(err.phone)} />
           </Field>
         </div>
       </div>
@@ -230,18 +294,18 @@
   }
 
   /* ── Step 2 ── */
-  function Step2({ d, set, err }) {
+  function Step2({ d, set, err, t, lang }) {
     return (
       <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
         <div>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.navy }}>Organization Details</h2>
-          <p style={{ fontSize:13, color:C.muted, marginTop:4 }}>Tell us about your company</p>
+          <h2 style={{ fontSize:22, fontWeight:700, color:C.navy }}>{t.s2Title}</h2>
+          <p style={{ fontSize:13, color:C.muted, marginTop:4 }}>{t.s2Sub}</p>
         </div>
         <div className="g-co" style={{ display:'grid', gridTemplateColumns:'1fr 160px', gap:12 }}>
-          <Field label="Company / Organization" required error={err.company}>
-            <input value={d.company} onChange={e=>set({...d,company:e.target.value})} placeholder="Company name" style={inp(err.company)} />
+          <Field label={t.company} required error={err.company}>
+            <input value={d.company} onChange={e=>set({...d,company:e.target.value})} placeholder={t.phCompany} style={inp(err.company)} />
           </Field>
-          <Field label="Country">
+          <Field label={t.country}>
             <select value={d.country} onChange={e=>set({...d,country:e.target.value})} style={inp()}>
               {COUNTRIES.map(c=><option key={c}>{c}</option>)}
             </select>
@@ -249,7 +313,7 @@
         </div>
         <div>
           <label style={{ fontSize:13, fontWeight:600, color:C.navy, display:'block', marginBottom:8 }}>
-            Business Industry <span style={{ color:C.orange }}>*</span>
+            {t.industry} <span style={{ color:C.orange }}>*</span>
           </label>
           <div className="g-biz" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
             {BIZ_TYPES.map(b => {
@@ -264,7 +328,7 @@
                     fontSize:12, fontWeight: sel ? 600 : 400,
                     transition:'all .18s',
                   }}>
-                  {b.label}
+                  {b[lang]}
                 </button>
               );
             })}
@@ -276,7 +340,7 @@
   }
 
   /* ── Step 3 ── */
-  function Step3({ d, set }) {
+  function Step3({ d, set, t, lang }) {
     const toggle = id => {
       const cur = d.interests || [];
       set({ ...d, interests: cur.includes(id) ? cur.filter(x=>x!==id) : [...cur,id] });
@@ -284,8 +348,8 @@
     return (
       <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
         <div>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.navy }}>Areas of Interest</h2>
-          <p style={{ fontSize:13, color:C.muted, marginTop:4 }}>Select all products you'd like to learn about</p>
+          <h2 style={{ fontSize:22, fontWeight:700, color:C.navy }}>{t.s3Title}</h2>
+          <p style={{ fontSize:13, color:C.muted, marginTop:4 }}>{t.s3Sub}</p>
         </div>
         <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           {PRODUCTS.map(p => {
@@ -297,27 +361,21 @@
                   {on && <svg width="11" height="9" viewBox="0 0 11 9"><path d="M1 4.5l3 3 6-7" stroke="white" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </div>
                 <div>
-                  <div style={{ fontSize:14, fontWeight:on?600:500, color:C.navy }}>{p.label}</div>
-                  <div style={{ fontSize:12, color:C.muted, marginTop:1 }}>{p.desc}</div>
+                  <div style={{ fontSize:14, fontWeight:on?600:500, color:C.navy }}>{p[lang]}</div>
+                  <div style={{ fontSize:12, color:C.muted, marginTop:1 }}>{p[lang + 'Desc']}</div>
                 </div>
               </label>
             );
           })}
         </div>
-        <Field label="How did you hear about this event?">
-          <select value={d.source||''} onChange={e=>set({...d,source:e.target.value})} style={inp()}>
-            <option value="">Select one…</option>
-            {SOURCES.map(s=><option key={s}>{s}</option>)}
-          </select>
-        </Field>
       </div>
     );
   }
 
   /* ── Step 4 ── */
-  function Step4({ d, event }) {
-    const bizLabel = BIZ_TYPES.find(b=>b.id===d.biz)?.label || '—';
-    const intLabels = (d.interests||[]).map(id=>PRODUCTS.find(p=>p.id===id)?.label).filter(Boolean);
+  function Step4({ d, event, t, lang }) {
+    const bizLabel = BIZ_TYPES.find(b=>b.id===d.biz)?.[lang] || '—';
+    const intLabels = (d.interests||[]).map(id=>PRODUCTS.find(p=>p.id===id)?.[lang]).filter(Boolean);
     const Row = ({k,v}) => (
       <div style={{ display:'flex', gap:12, padding:'9px 0', borderBottom:`1px solid ${C.border}` }}>
         <span style={{ width:130, fontSize:13, color:C.muted, flexShrink:0 }}>{k}</span>
@@ -327,34 +385,31 @@
     return (
       <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
         <div>
-          <h2 style={{ fontSize:22, fontWeight:700, color:C.navy }}>Review &amp; Confirm</h2>
-          <p style={{ fontSize:13, color:C.muted, marginTop:4 }}>Please verify your information before submitting</p>
+          <h2 style={{ fontSize:22, fontWeight:700, color:C.navy }}>{t.s4Title}</h2>
+          <p style={{ fontSize:13, color:C.muted, marginTop:4 }}>{t.s4Sub}</p>
         </div>
         <div style={{ background:C.gray100, borderRadius:10, padding:'0 16px', border:`1px solid ${C.border}` }}>
-          <Row k="Full Name" v={`${d.prefix} ${d.firstName} ${d.lastName}`} />
-          <Row k="Job Title" v={d.title} />
-          <Row k="Email" v={d.email} />
-          <Row k="Phone" v={d.phone} />
-          <Row k="Company" v={d.company} />
-          <Row k="Country" v={d.country} />
-          <Row k="Industry" v={bizLabel} />
-          <Row k="Interests" v={intLabels.length ? intLabels.join(', ') : '—'} />
-          <Row k="Source" v={d.source||'—'} />
+          <Row k={t.rowName} v={`${d.prefix} ${d.firstName} ${d.lastName}`} />
+          <Row k={t.rowJob} v={d.title} />
+          <Row k={t.rowEmail} v={d.email} />
+          <Row k={t.rowPhone} v={d.phone} />
+          <Row k={t.rowCompany} v={d.company} />
+          <Row k={t.rowCountry} v={d.country} />
+          <Row k={t.rowIndustry} v={bizLabel} />
+          <Row k={t.rowInterests} v={intLabels.length ? intLabels.join(', ') : '—'} />
         </div>
         <div style={{ background:`${C.orange}12`, border:`1px solid ${C.orange}35`, borderRadius:10, padding:'12px 16px', fontSize:13, color:C.navy, lineHeight:1.7 }}>
-          <strong>Event:</strong> {event.name} &nbsp;·&nbsp;
-          <strong>Date:</strong> {event.date} &nbsp;·&nbsp;
-          <strong>Venue:</strong> {event.venue}
+          <strong>{t.lblEvent}:</strong> {event.name} &nbsp;·&nbsp;
+          <strong>{t.lblDate}:</strong> {event.date} &nbsp;·&nbsp;
+          <strong>{t.lblVenue}:</strong> {event.venue}
         </div>
-        <p style={{ fontSize:12, color:C.muted, lineHeight:1.6 }}>
-          By submitting this form, you consent to EMD contacting you with event updates and product information.
-        </p>
+        <p style={{ fontSize:12, color:C.muted, lineHeight:1.6 }}>{t.consent}</p>
       </div>
     );
   }
 
   /* ── Success ── */
-  function Success({ d, regId, event }) {
+  function Success({ d, regId, event, t }) {
     return (
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', padding:'12px 0' }}>
         <div style={{ width:68, height:68, borderRadius:'50%', background:'#ECFDF5', border:`2.5px solid ${C.success}`, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:20 }}>
@@ -362,23 +417,21 @@
             <path d="M2 12l9 9L28 2" stroke={C.success} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <h2 style={{ fontSize:26, fontWeight:800, color:C.navy, marginBottom:8 }}>Registration Successful!</h2>
+        <h2 style={{ fontSize:26, fontWeight:800, color:C.navy, marginBottom:8 }}>{t.successTitle}</h2>
         <p style={{ fontSize:14, color:C.muted, marginBottom:24, maxWidth:360 }}>
-          Thank you, <strong>{d.firstName}</strong>. We look forward to seeing you at {event.name}.
+          {t.successThanks(d.firstName, event.name)}
         </p>
         <div style={{ background:C.navy, color:'white', borderRadius:12, padding:'14px 32px', marginBottom:24 }}>
-          <div style={{ fontSize:11, opacity:.6, marginBottom:3, letterSpacing:1, textTransform:'uppercase' }}>Registration ID</div>
+          <div style={{ fontSize:11, opacity:.6, marginBottom:3, letterSpacing:1, textTransform:'uppercase' }}>{t.successId}</div>
           <div style={{ fontSize:22, fontWeight:800, letterSpacing:2 }}>{regId}</div>
         </div>
         <p style={{ fontSize:13, color:C.muted, marginBottom:32 }}>
-          A confirmation will be sent to <strong>{d.email}</strong>
+          {t.successEmail(d.email)}
         </p>
-        <div style={{ display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center' }}>
-          <button onClick={()=>window.location.reload()}
-            style={{ display:'inline-flex', alignItems:'center', gap:8, background:C.orange, color:'white', padding:'12px 28px', borderRadius:8, fontWeight:700, fontSize:14, border:'none', cursor:'pointer' }}>
-            Register Another Person
-          </button>
-        </div>
+        <button onClick={()=>window.location.reload()}
+          style={{ display:'inline-flex', alignItems:'center', gap:8, background:C.orange, color:'white', padding:'12px 28px', borderRadius:8, fontWeight:700, fontSize:14, border:'none', cursor:'pointer' }}>
+          {t.registerAnother}
+        </button>
       </div>
     );
   }
@@ -387,7 +440,7 @@
   const INIT = {
     prefix:'Mr.', firstName:'', lastName:'', title:'',
     email:'', phone:'', company:'', country:'Thailand',
-    biz:'', interests:[], source:''
+    biz:'', interests:[],
   };
 
   function App() {
@@ -396,7 +449,9 @@
     const [err, setErr] = useState({});
     const [submitted, setSubmitted] = useState(false);
     const [regId, setRegId] = useState('');
-    const [activeEvent, setActiveEvent] = useState(undefined); // undefined = loading
+    const [activeEvent, setActiveEvent] = useState(undefined);
+    const [lang, setLang] = useState('th');
+    const t = LANG[lang];
 
     useEffect(() => {
       const fallback = setTimeout(() => setActiveEvent(DEFAULT_EVENT), 3000);
@@ -413,15 +468,15 @@
     const validate = () => {
       const e = {};
       if (step === 1) {
-        if (!d.firstName.trim()) e.firstName = 'First name is required';
-        if (!d.lastName.trim()) e.lastName = 'Last name is required';
-        if (!d.title.trim()) e.title = 'Job title is required';
-        if (!d.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) e.email = 'Valid email required';
-        if (!d.phone.trim()) e.phone = 'Phone number is required';
+        if (!d.firstName.trim()) e.firstName = t.errFirst;
+        if (!d.lastName.trim()) e.lastName = t.errLast;
+        if (!d.title.trim()) e.title = t.errTitle;
+        if (!d.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) e.email = t.errEmail;
+        if (!d.phone.trim()) e.phone = t.errPhone;
       }
       if (step === 2) {
-        if (!d.company.trim()) e.company = 'Company name is required';
-        if (!d.biz) e.biz = 'Please select your business industry';
+        if (!d.company.trim()) e.company = t.errCompany;
+        if (!d.biz) e.biz = t.errBiz;
       }
       setErr(e);
       return !Object.keys(e).length;
@@ -432,15 +487,13 @@
       if (step < 4) { setStep(s => s + 1); return; }
       const id = 'EMD-' + (10000 + Math.floor(Math.random() * 90000));
       const p = { ...d, businessType: d.biz, id, eventId: activeEvent, registrationDate: new Date().toISOString(), status: 'confirmed' };
-      try {
-        await participantsCol.add(p);
-      } catch(_) {}
+      try { await participantsCol.add(p); } catch(_) {}
       setRegId(id);
       setSubmitted(true);
     };
 
     const baseWrap = { minHeight:'100vh', background:C.bg, fontFamily:"'Plus Jakarta Sans', sans-serif" };
-    const header = {
+    const headerStyle = {
       background:C.white, padding:'14px 32px',
       display:'flex', justifyContent:'space-between', alignItems:'center',
       borderBottom:`3px solid ${C.orange}`,
@@ -449,16 +502,16 @@
 
     if (activeEvent === undefined) return (
       <div style={{ ...baseWrap, display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <div style={{ fontSize:14, color:C.muted }}>Loading…</div>
+        <div style={{ fontSize:14, color:C.muted }}>{t.loading}</div>
       </div>
     );
 
     if (submitted) return (
       <div style={baseWrap}>
-        <header style={header} className="rform-header"><Logo /></header>
+        <header style={headerStyle} className="rform-header"><Logo /></header>
         <main className="rform-main" style={{ display:'flex', justifyContent:'center', padding:'40px 20px 60px' }}>
           <div className="rform-card" style={{ background:C.white, borderRadius:16, maxWidth:540, width:'100%', padding:'40px', boxShadow:'0 4px 32px rgba(11,37,69,.09)' }}>
-            <Success d={d} regId={regId} event={EVENT} />
+            <Success d={d} regId={regId} event={EVENT} t={t} />
           </div>
         </main>
       </div>
@@ -467,13 +520,19 @@
     return (
       <div style={baseWrap}>
         {/* Header */}
-        <header style={header} className="rform-header">
+        <header style={headerStyle} className="rform-header">
           <Logo />
-          <div style={{ color:C.navy, textAlign:'right', display:'flex', alignItems:'center', gap:8 }}>
-            <span style={{ width:8, height:8, borderRadius:'50%', background:'#10B981', display:'inline-block', flexShrink:0 }} />
-            <div>
-              <div style={{ fontSize:13, fontWeight:800 }}>{EVENT.label}</div>
-              <div style={{ fontSize:11, color:C.muted }}>Open for registration</div>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <button onClick={()=>setLang(l=>l==='th'?'en':'th')}
+              style={{ padding:'5px 14px', borderRadius:6, border:`1.5px solid ${C.border}`, background:C.white, color:C.navy, fontSize:12, fontWeight:700, cursor:'pointer' }}>
+              {t.langBtn}
+            </button>
+            <div style={{ color:C.navy, textAlign:'right', display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ width:8, height:8, borderRadius:'50%', background:'#10B981', display:'inline-block', flexShrink:0 }} />
+              <div>
+                <div style={{ fontSize:13, fontWeight:800 }}>{EVENT.label}</div>
+                <div style={{ fontSize:11, color:C.muted }}>{t.openFor}</div>
+              </div>
             </div>
           </div>
         </header>
@@ -485,33 +544,33 @@
           <div style={{ maxWidth:600, margin:'0 auto', color:'white', position:'relative' }}>
             <div style={{ display:'inline-flex', alignItems:'center', gap:7, background:'rgba(255,255,255,.14)', border:'1px solid rgba(255,255,255,.25)', borderRadius:999, padding:'4px 12px', marginBottom:10 }}>
               <span style={{ width:8, height:8, borderRadius:'50%', background:'#34D399', display:'inline-block', boxShadow:'0 0 0 3px rgba(52,211,153,.25)' }} />
-              <span style={{ fontSize:12, fontWeight:700, letterSpacing:.3 }}>Now open: {EVENT.label}</span>
+              <span style={{ fontSize:12, fontWeight:700, letterSpacing:.3 }}>{t.nowOpen} {EVENT.label}</span>
             </div>
-            <h1 style={{ fontSize:24, fontWeight:800, marginBottom:4 }}>Event Registration</h1>
-            <p style={{ fontSize:13, opacity:.75 }}>Complete the form below to secure your place at <strong>{EVENT.label}</strong></p>
+            <h1 style={{ fontSize:24, fontWeight:800, marginBottom:4 }}>{t.heroTitle}</h1>
+            <p style={{ fontSize:13, opacity:.75 }}>{t.heroSub} <strong>{EVENT.label}</strong></p>
           </div>
         </div>
 
         {/* Form */}
         <main className="rform-main" style={{ display:'flex', justifyContent:'center', padding:'32px 20px 60px' }}>
           <div className="rform-card" style={{ background:C.white, borderRadius:16, maxWidth:600, width:'100%', padding:'36px', boxShadow:'0 4px 32px rgba(11,37,69,.08)' }}>
-            <StepBar current={step} />
+            <StepBar current={step} t={t} />
             <div className="step-enter" key={step}>
-              {step === 1 && <Step1 d={d} set={setD} err={err} />}
-              {step === 2 && <Step2 d={d} set={setD} err={err} />}
-              {step === 3 && <Step3 d={d} set={setD} />}
-              {step === 4 && <Step4 d={d} event={EVENT} />}
+              {step === 1 && <Step1 d={d} set={setD} err={err} t={t} />}
+              {step === 2 && <Step2 d={d} set={setD} err={err} t={t} lang={lang} />}
+              {step === 3 && <Step3 d={d} set={setD} t={t} lang={lang} />}
+              {step === 4 && <Step4 d={d} event={EVENT} t={t} lang={lang} />}
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:28, paddingTop:20, borderTop:`1px solid ${C.border}` }}>
               <button onClick={()=>{setStep(s=>s-1); setErr({});}}
                 disabled={step===1}
                 style={{ padding:'10px 22px', borderRadius:8, border:`2px solid ${step===1?C.border:C.navy}`, background:'transparent', color:step===1?C.border:C.navy, fontWeight:600, fontSize:14, cursor:step===1?'default':'pointer', transition:'all .18s' }}>
-                ← Back
+                {t.back}
               </button>
-              <div style={{ fontSize:12, color:C.muted }}>Step {step} of 4</div>
+              <div style={{ fontSize:12, color:C.muted }}>{t.stepOf(step)}</div>
               <button onClick={handleNext}
                 style={{ padding:'10px 28px', borderRadius:8, border:'none', background:C.orange, color:'white', fontWeight:700, fontSize:14, boxShadow:`0 2px 12px ${C.orange}55`, transition:'opacity .18s' }}>
-                {step === 4 ? 'Submit Registration ✓' : 'Continue →'}
+                {step === 4 ? t.submit : t.next}
               </button>
             </div>
           </div>

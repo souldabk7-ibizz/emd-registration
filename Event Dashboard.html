@@ -26,6 +26,7 @@
     @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
     .fade-up { animation: fadeUp 0.3s ease forwards; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes toastIn { from { opacity:0; transform:translateX(80px); } to { opacity:1; transform:translateX(0); } }
 
     /* ── Dashboard Responsive — iPad (601–900px): horizontal top nav ── */
     @media (min-width: 601px) and (max-width: 900px) {
@@ -913,6 +914,25 @@
     );
   }
 
+  /* ─────────────────── Toast ─────────────────── */
+  function Toast({ toasts }) {
+    if (!toasts.length) return null;
+    return (
+      <div style={{ position:'fixed', bottom:24, right:24, display:'flex', flexDirection:'column', gap:10, zIndex:9999, pointerEvents:'none' }}>
+        {toasts.map(t => (
+          <div key={t.id} style={{ background:C.navy, color:'white', padding:'14px 18px', borderRadius:12, fontSize:13, fontWeight:600, boxShadow:'0 6px 24px rgba(0,0,0,0.22)', display:'flex', alignItems:'flex-start', gap:12, animation:'toastIn 0.3s ease', minWidth:260, maxWidth:320 }}>
+            <span style={{ fontSize:20, lineHeight:1, flexShrink:0 }}>🔔</span>
+            <div>
+              <div style={{ fontSize:10, fontWeight:500, opacity:.55, letterSpacing:.6, textTransform:'uppercase', marginBottom:3 }}>ผู้ลงทะเบียนใหม่</div>
+              <div>{t.name}</div>
+              {t.company && <div style={{ fontSize:11, opacity:.65, fontWeight:400, marginTop:2 }}>{t.company}</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   /* ─────────────────── App ─────────────────── */
   function App() {
     const [tab, setTab] = useState('overview');
@@ -920,6 +940,14 @@
     const [editing, setEditing] = useState(null);
     const [eventId, setEventId] = useState(urlEventId);
     const [activeEvent, setActiveEvent] = useState(null);
+    const [toasts, setToasts] = useState([]);
+    const isInitialLoad = useRef(true);
+
+    const addToast = (name, company) => {
+      const id = Date.now();
+      setToasts(prev => [...prev, { id, name, company }]);
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
+    };
 
     const EVENT = EVENT_CONFIG[eventId] || EVENT_CONFIG[DEFAULT_EVENT];
 
@@ -937,6 +965,7 @@
 
     useEffect(() => {
       setAll([]);
+      isInitialLoad.current = true;
       const unsub = db.collection('participants')
         .where('eventId', '==', eventId)
         .onSnapshot(snapshot => {
@@ -944,6 +973,15 @@
             .map(doc => ({ _docId: doc.id, ...doc.data() }))
             .sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate));
           setAll(data);
+          if (!isInitialLoad.current) {
+            snapshot.docChanges()
+              .filter(c => c.type === 'added')
+              .forEach(c => {
+                const p = c.doc.data();
+                addToast(`${p.prefix || ''} ${p.firstName} ${p.lastName}`.trim(), p.company);
+              });
+          }
+          isInitialLoad.current = false;
         }, () => {});
       return () => unsub();
     }, [eventId]);
@@ -1006,6 +1044,7 @@
           </div>
         </div>
         <BottomNav active={tab} onSelect={setTab} eventId={eventId} />
+        <Toast toasts={toasts} />
       </div>
     );
   }

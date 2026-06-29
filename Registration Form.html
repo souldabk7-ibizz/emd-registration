@@ -290,7 +290,7 @@
             <input type="email" value={d.email} onChange={u('email')} placeholder={t.phEmail} style={inp(err.email)} />
           </Field>
           <Field label={t.phone} required error={err.phone}>
-            <input value={d.phone} onChange={u('phone')} placeholder={t.phPhone} style={inp(err.phone)} />
+            <input type="tel" inputMode="tel" value={d.phone} onChange={u('phone')} placeholder={t.phPhone} style={inp(err.phone)} />
           </Field>
         </div>
       </div>

@@ -133,7 +133,7 @@
       consent: 'การส่งแบบฟอร์มนี้ถือว่าคุณยินยอมให้ EMD ติดต่อคุณเกี่ยวกับข่าวสารงานและข้อมูลผลิตภัณฑ์',
       lblEvent: 'งาน', lblDate: 'วันที่', lblVenue: 'สถานที่',
       successTitle: 'ลงทะเบียนสำเร็จ!',
-      successThanks: (n, ev) => `ขอบคุณ ${n} เราหวังว่าจะได้พบคุณที่งาน ${ev}`,
+      successThanks: (n, ev) => `ขอบคุณสำหรับการลงทะเบียน`,
       successId: 'รหัสลงทะเบียน',
       successEmail: em => `ข้อมูลยืนยันจะถูกส่งไปที่ ${em}`,
       registerAnother: 'ลงทะเบียนอีกคน',
@@ -172,7 +172,7 @@
       consent: 'By submitting this form, you consent to EMD contacting you with event updates and product information.',
       lblEvent: 'Event', lblDate: 'Date', lblVenue: 'Venue',
       successTitle: 'Registration Successful!',
-      successThanks: (n, ev) => `Thank you, ${n}. We look forward to seeing you at ${ev}.`,
+      successThanks: (n, ev) => `Thank you for registering.`,
       successId: 'Registration ID',
       successEmail: em => `A confirmation will be sent to ${em}`,
       registerAnother: 'Register Another Person',
@@ -435,10 +435,6 @@
         <p style={{ fontSize:13, color:C.muted, marginBottom:24 }}>
           {t.successEmail(d.email)}
         </p>
-        <div style={{ background:'#F0FDF4', border:'1.5px solid #86EFAC', borderRadius:12, padding:'14px 24px', display:'flex', alignItems:'center', gap:12, maxWidth:320 }}>
-          <span style={{ fontSize:22, flexShrink:0 }}>✕</span>
-          <span style={{ fontSize:13, color:'#166534', fontWeight:600, textAlign:'left', lineHeight:1.5 }}>{t.closeManual}</span>
-        </div>
       </div>
     );
   }

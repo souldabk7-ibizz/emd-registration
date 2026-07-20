@@ -11,6 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
@@ -1056,7 +1057,8 @@
                 </svg>
                 <span>Export Excel</span>
               </button>
-              <div style={{ width:32, height:32, borderRadius:'50%', background:C.orange, color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700 }}>A</div>
+              <button onClick={() => firebase.auth().signOut()} title="Sign out"
+                style={{ width:32, height:32, borderRadius:'50%', background:C.orange, color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, border:'none', cursor:'pointer' }}>A</button>
             </div>
           </div>
 
@@ -1082,13 +1084,33 @@
     );
   }
 
-  function LoginGate({ onAuth }) {
+  // Login accepts a plain username; it is mapped to <username>@emd.local for Firebase Auth.
+  const ADMIN_DOMAIN = 'emd.local';
+
+  function LoginGate() {
+    const [user, setUser] = useState('');
     const [pw, setPw] = useState('');
-    const [err, setErr] = useState(false);
-    const submit = () => {
-      if (pw.toLowerCase() === 'emd') { onAuth(); }
-      else { setErr(true); setPw(''); }
+    const [err, setErr] = useState('');
+    const [busy, setBusy] = useState(false);
+
+    const submit = async () => {
+      if (busy) return;
+      const uname = user.trim().toLowerCase();
+      if (!uname || !pw) { setErr('Enter username and password'); return; }
+      const email = uname.includes('@') ? uname : `${uname}@${ADMIN_DOMAIN}`;
+      setBusy(true); setErr('');
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, pw);
+        // Root's auth listener switches to the dashboard on success
+      } catch (e) {
+        setBusy(false);
+        setPw('');
+        setErr('Incorrect username or password');
+      }
     };
+
+    const field = isErr => ({ width:'100%', padding:'11px 14px', borderRadius:8, border:`1.5px solid ${isErr?'#DC2626':C.border}`, fontSize:14, color:C.navy, outline:'none', boxSizing:'border-box', marginBottom:10 });
+
     return (
       <div style={{ minHeight:'100vh', background:C.navy, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
         <div style={{ background:C.white, borderRadius:16, padding:'40px 36px', width:320, boxShadow:'0 8px 40px rgba(0,0,0,.25)', textAlign:'center' }}>
@@ -1098,17 +1120,29 @@
           <div style={{ fontSize:16, fontWeight:800, color:C.navy, marginBottom:4 }}>Participant Dashboard</div>
           <div style={{ fontSize:12, color:C.muted, marginBottom:24 }}>Admin access only</div>
           <input
+            type="text"
+            value={user}
+            onChange={e=>{ setUser(e.target.value); setErr(''); }}
+            onKeyDown={e=>e.key==='Enter'&&submit()}
+            placeholder="Username"
+            autoFocus
+            autoComplete="username"
+            disabled={busy}
+            style={field(err)}
+          />
+          <input
             type="password"
             value={pw}
-            onChange={e=>{ setPw(e.target.value); setErr(false); }}
+            onChange={e=>{ setPw(e.target.value); setErr(''); }}
             onKeyDown={e=>e.key==='Enter'&&submit()}
             placeholder="Password"
-            autoFocus
-            style={{ width:'100%', padding:'11px 14px', borderRadius:8, border:`1.5px solid ${err?'#DC2626':C.border}`, fontSize:14, color:C.navy, outline:'none', boxSizing:'border-box', marginBottom:8 }}
+            autoComplete="current-password"
+            disabled={busy}
+            style={field(err)}
           />
-          {err && <div style={{ fontSize:12, color:'#DC2626', marginBottom:8 }}>Incorrect password</div>}
-          <button onClick={submit} style={{ width:'100%', padding:'11px', borderRadius:8, border:'none', background:C.orange, color:'white', fontSize:14, fontWeight:700, cursor:'pointer', marginTop:4 }}>
-            Sign In
+          {err && <div style={{ fontSize:12, color:'#DC2626', marginBottom:8 }}>{err}</div>}
+          <button onClick={submit} disabled={busy} style={{ width:'100%', padding:'11px', borderRadius:8, border:'none', background:C.orange, color:'white', fontSize:14, fontWeight:700, cursor:busy?'default':'pointer', opacity:busy?.7:1, marginTop:4 }}>
+            {busy ? 'Signing in…' : 'Sign In'}
           </button>
         </div>
       </div>
@@ -1116,9 +1150,15 @@
   }
 
   function Root() {
-    const [authed, setAuthed] = useState(sessionStorage.getItem('dash_auth') === '1');
-    const auth = () => { sessionStorage.setItem('dash_auth','1'); setAuthed(true); };
-    if (!authed) return <LoginGate onAuth={auth} />;
+    const [authed, setAuthed] = useState(undefined);
+    useEffect(() => {
+      const unsub = firebase.auth().onAuthStateChanged(u => setAuthed(!!u));
+      return () => unsub();
+    }, []);
+    if (authed === undefined) return (
+      <div style={{ minHeight:'100vh', background:C.navy, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(255,255,255,.6)', fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14 }}>Loading…</div>
+    );
+    if (!authed) return <LoginGate />;
     return <App />;
   }
 

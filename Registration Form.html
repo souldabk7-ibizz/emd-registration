@@ -416,7 +416,7 @@
   }
 
   /* ── Success ── */
-  function Success({ d, regId, event, t }) {
+  function Success({ d, regId, event, t, onReset }) {
     return (
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', padding:'12px 0' }}>
         <div style={{ marginBottom:20, paddingBottom:20, borderBottom:`1px solid ${C.border}`, width:'100%', display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
@@ -431,10 +431,15 @@
         <p style={{ fontSize:14, color:C.muted, marginBottom:24, maxWidth:360 }}>
           {t.successThanks(d.firstName, event.name)}
         </p>
-        <div style={{ background:C.navy, color:'white', borderRadius:12, padding:'14px 32px', marginBottom:8 }}>
+        <div style={{ background:C.navy, color:'white', borderRadius:12, padding:'14px 32px', marginBottom:16 }}>
           <div style={{ fontSize:11, opacity:.6, marginBottom:3, letterSpacing:1, textTransform:'uppercase' }}>{t.successId}</div>
           <div style={{ fontSize:22, fontWeight:800, letterSpacing:2 }}>{regId}</div>
         </div>
+        <p style={{ fontSize:12, color:C.muted, marginBottom:20 }}>{t.successEmail(d.email)}</p>
+        <button onClick={onReset}
+          style={{ padding:'11px 28px', borderRadius:8, border:'none', background:C.orange, color:'white', fontWeight:700, fontSize:14, boxShadow:`0 2px 12px ${C.orange}55`, transition:'opacity .18s' }}>
+          {t.registerAnother}
+        </button>
       </div>
     );
   }
@@ -495,6 +500,14 @@
       setSubmitted(true);
     };
 
+    const resetForm = () => {
+      setD(INIT);
+      setStep(1);
+      setErr({});
+      setRegId('');
+      setSubmitted(false);
+    };
+
     const baseWrap = { minHeight:'100vh', background:C.bg, fontFamily:"'Plus Jakarta Sans', sans-serif" };
     const headerStyle = {
       background:C.white, padding:'14px 32px',
@@ -514,7 +527,7 @@
         <header style={headerStyle} className="rform-header"><Logo /></header>
         <main className="rform-main" style={{ display:'flex', justifyContent:'center', padding:'40px 20px 60px' }}>
           <div className="rform-card" style={{ background:C.white, borderRadius:16, maxWidth:540, width:'100%', padding:'40px', boxShadow:'0 4px 32px rgba(11,37,69,.09)' }}>
-            <Success d={d} regId={regId} event={EVENT} t={t} />
+            <Success d={d} regId={regId} event={EVENT} t={t} onReset={resetForm} />
           </div>
         </main>
       </div>

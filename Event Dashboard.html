@@ -93,6 +93,9 @@
 <script type="text/babel">
   const { useState, useEffect, useMemo, useRef } = React;
   const db = firebase.firestore();
+  // Session-only login: closing the browser signs the admin out, so a shared
+  // booth laptop doesn't stay authenticated indefinitely.
+  firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(() => {});
 
   const EVENT_CONFIG = {
     'emd-2026': {

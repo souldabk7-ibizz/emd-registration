@@ -550,7 +550,7 @@
             <div style={{ color:C.navy, textAlign:'right', display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ width:8, height:8, borderRadius:'50%', background:'#10B981', display:'inline-block', flexShrink:0 }} />
               <div>
-                <div style={{ fontSize:13, fontWeight:800 }}>{EVENT.label}</div>
+                <div style={{ fontSize:13, fontWeight:800 }}>{EVENT.name}</div>
                 <div style={{ fontSize:11, color:C.muted }}>{t.openFor}</div>
               </div>
             </div>
@@ -564,10 +564,10 @@
           <div style={{ maxWidth:600, margin:'0 auto', color:'white', position:'relative' }}>
             <div style={{ display:'inline-flex', alignItems:'center', gap:7, background:'rgba(255,255,255,.14)', border:'1px solid rgba(255,255,255,.25)', borderRadius:999, padding:'4px 12px', marginBottom:10 }}>
               <span style={{ width:8, height:8, borderRadius:'50%', background:'#34D399', display:'inline-block', boxShadow:'0 0 0 3px rgba(52,211,153,.25)' }} />
-              <span style={{ fontSize:12, fontWeight:700, letterSpacing:.3 }}>{t.nowOpen} {EVENT.label}</span>
+              <span style={{ fontSize:12, fontWeight:700, letterSpacing:.3 }}>{t.nowOpen} {EVENT.name}</span>
             </div>
             <h1 style={{ fontSize:24, fontWeight:800, marginBottom:4 }}>{t.heroTitle}</h1>
-            <p style={{ fontSize:13, opacity:.75 }}>{t.heroSub} <strong>{EVENT.label}</strong></p>
+            <p style={{ fontSize:13, opacity:.75 }}>{t.heroSub} <strong>{EVENT.name}</strong></p>
           </div>
         </div>
 

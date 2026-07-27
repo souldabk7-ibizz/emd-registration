@@ -42,6 +42,10 @@
       .g-co   { grid-template-columns: 1fr !important; }
       .g-biz  { grid-template-columns: repeat(2, 1fr) !important; }
       .step-label { display: none; }
+      /* Labels are hidden here, so shrink the step bar to fit narrow phones
+         (4x64 + 3x52 = 412px overflowed a 375px screen). */
+      .step-item { min-width: 44px !important; }
+      .step-line { width: 24px !important; }
     }
     @media (min-width: 601px) and (max-width: 900px) {
       .rform-card { padding: 28px !important; }
@@ -65,7 +69,7 @@
       date:  '15–16 June 2026',
       venue: 'Centara Grand Hotel, Bangkok',
     },
-    'event-2': { label:'Event 2', name:'Event 2', short:'Event 2', date:'TBD', venue:'TBD' },
+    'event-2': { label:'Event 2', name:'EMD Exhibition at HDY', short:'Exhibition at HDY', date:'6 August 2026', venue:'HDY' },
     'event-3': { label:'Event 3', name:'Event 3', short:'Event 3', date:'TBD', venue:'TBD' },
     'event-4': { label:'Event 4', name:'Event 4', short:'Event 4', date:'TBD', venue:'TBD' },
   };
@@ -212,7 +216,7 @@
           const n = i + 1, done = n < current, active = n === current;
           return (
             <React.Fragment key={n}>
-              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, minWidth:64 }}>
+              <div className="step-item" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, minWidth:64 }}>
                 <div style={{
                   width:34, height:34, borderRadius:'50%', display:'flex', alignItems:'center',
                   justifyContent:'center', fontSize:13, fontWeight:700, transition:'all .25s',
@@ -229,7 +233,7 @@
                 </span>
               </div>
               {i < t.steps.length - 1 && (
-                <div style={{ height:2, width:52, marginTop:16, flexShrink:0,
+                <div className="step-line" style={{ height:2, width:52, marginTop:16, flexShrink:0,
                   background: done ? C.orange : C.border, transition:'background .3s' }} />
               )}
             </React.Fragment>
@@ -416,7 +420,7 @@
   }
 
   /* ── Success ── */
-  function Success({ d, regId, event, t }) {
+  function Success({ d, regId, event, t, onReset }) {
     return (
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', padding:'12px 0' }}>
         <div style={{ marginBottom:20, paddingBottom:20, borderBottom:`1px solid ${C.border}`, width:'100%', display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
@@ -431,10 +435,15 @@
         <p style={{ fontSize:14, color:C.muted, marginBottom:24, maxWidth:360 }}>
           {t.successThanks(d.firstName, event.name)}
         </p>
-        <div style={{ background:C.navy, color:'white', borderRadius:12, padding:'14px 32px', marginBottom:8 }}>
+        <div style={{ background:C.navy, color:'white', borderRadius:12, padding:'14px 32px', marginBottom:16 }}>
           <div style={{ fontSize:11, opacity:.6, marginBottom:3, letterSpacing:1, textTransform:'uppercase' }}>{t.successId}</div>
           <div style={{ fontSize:22, fontWeight:800, letterSpacing:2 }}>{regId}</div>
         </div>
+        <p style={{ fontSize:12, color:C.muted, marginBottom:20 }}>{t.successEmail(d.email)}</p>
+        <button onClick={onReset}
+          style={{ padding:'11px 28px', borderRadius:8, border:'none', background:C.orange, color:'white', fontWeight:700, fontSize:14, boxShadow:`0 2px 12px ${C.orange}55`, transition:'opacity .18s' }}>
+          {t.registerAnother}
+        </button>
       </div>
     );
   }
@@ -495,6 +504,14 @@
       setSubmitted(true);
     };
 
+    const resetForm = () => {
+      setD(INIT);
+      setStep(1);
+      setErr({});
+      setRegId('');
+      setSubmitted(false);
+    };
+
     const baseWrap = { minHeight:'100vh', background:C.bg, fontFamily:"'Plus Jakarta Sans', sans-serif" };
     const headerStyle = {
       background:C.white, padding:'14px 32px',
@@ -514,7 +531,7 @@
         <header style={headerStyle} className="rform-header"><Logo /></header>
         <main className="rform-main" style={{ display:'flex', justifyContent:'center', padding:'40px 20px 60px' }}>
           <div className="rform-card" style={{ background:C.white, borderRadius:16, maxWidth:540, width:'100%', padding:'40px', boxShadow:'0 4px 32px rgba(11,37,69,.09)' }}>
-            <Success d={d} regId={regId} event={EVENT} t={t} />
+            <Success d={d} regId={regId} event={EVENT} t={t} onReset={resetForm} />
           </div>
         </main>
       </div>

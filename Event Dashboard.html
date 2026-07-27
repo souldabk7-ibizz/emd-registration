@@ -101,7 +101,7 @@
       date:  '15–16 June 2026',
       venue: 'Centara Grand Hotel, Bangkok',
     },
-    'event-2': { label:'Event 2', name:'Event 2', short:'Event 2', date:'TBD', venue:'TBD' },
+    'event-2': { label:'Event 2', name:'EMD Exhibition at HDY', short:'Exhibition at HDY', date:'6 August 2026', venue:'HDY' },
     'event-3': { label:'Event 3', name:'Event 3', short:'Event 3', date:'TBD', venue:'TBD' },
     'event-4': { label:'Event 4', name:'Event 4', short:'Event 4', date:'TBD', venue:'TBD' },
   };
@@ -134,8 +134,7 @@
   const PROD_MAP = {
     motors:     'Electric Motors',
     drives:     'Variable Speed Drives',
-    mechanical: 'Mechanical & Fans',
-    filters:    'Industrial Air Filters',
+    mechanical: 'Mechanical & Industrial Fans',
     fiber:      'Fiber Optic Sensing',
   };
 
@@ -454,7 +453,7 @@
     ).map(([id,count])=>({ id, label:BIZ_MAP[id]?.label||id, value:count, color:BIZ_MAP[id]?.color||C.muted }))
       .sort((a,b)=>b.value-a.value);
 
-    const PROD_COLORS = { motors:'#D97706', drives:'#10B981', mechanical:'#1565C0', filters:'#6366F1', fiber:'#8B5CF6' };
+    const PROD_COLORS = { motors:'#D97706', drives:'#10B981', mechanical:'#1565C0', fiber:'#8B5CF6' };
     const prodCounts = Object.entries(
       all.flatMap(p => p.interests || []).reduce((acc,id) => { acc[id]=(acc[id]||0)+1; return acc; }, {})
     ).map(([id,count])=>({ id, label:PROD_MAP[id]||id, value:count, color:PROD_COLORS[id]||C.orange }))
@@ -612,7 +611,7 @@
                     </td>
                     <td style={{ padding:'10px 14px' }}>
                       <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
-                        {p.interests.map(id=>(
+                        {(p.interests||[]).map(id=>(
                           <span key={id} style={{ fontSize:10, color:C.navyMid, background:C.gray100, borderRadius:4, padding:'2px 6px', whiteSpace:'nowrap' }}>
                             {PROD_MAP[id]?.split(' ')[0]}
                           </span>
@@ -707,7 +706,7 @@
   /* ─────────────────── Analytics Tab ─────────────────── */
   function AnalyticsTab({ all }) {
     const prodCounts = Object.entries(
-      all.flatMap(p=>p.interests).reduce((acc,id)=>{acc[id]=(acc[id]||0)+1;return acc;},{})
+      all.flatMap(p=>p.interests||[]).reduce((acc,id)=>{acc[id]=(acc[id]||0)+1;return acc;},{})
     ).map(([id,count])=>({ id, label:PROD_MAP[id]||id, value:count, color:C.orange })).sort((a,b)=>b.value-a.value);
 
     const sourceCounts = Object.entries(
@@ -949,7 +948,7 @@
   }
 
   /* ─────────────────── App ─────────────────── */
-  function App() {
+  function App({ onSignOut }) {
     const [tab, setTab] = useState('overview');
     const [all, setAll] = useState([]);
     const [editing, setEditing] = useState(null);
@@ -1057,7 +1056,8 @@
                 </svg>
                 <span>Export Excel</span>
               </button>
-              <div style={{ width:32, height:32, borderRadius:'50%', background:C.orange, color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700 }}>A</div>
+              <button onClick={onSignOut} title="Sign out"
+                style={{ width:32, height:32, borderRadius:'50%', background:C.orange, color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, border:'none', cursor:'pointer' }}>A</button>
             </div>
           </div>
 
@@ -1083,13 +1083,22 @@
     );
   }
 
+  // Simple shared-password gate. This is a soft gate only — it keeps the
+  // dashboard out of casual reach, but the password ships in the page source,
+  // so treat the URL as semi-private and don't hand it to customers.
+  const DASH_PASSWORD = 'emd';
+
   function LoginGate({ onAuth }) {
     const [pw, setPw] = useState('');
-    const [err, setErr] = useState(false);
+    const [err, setErr] = useState('');
+
     const submit = () => {
-      if (pw.toLowerCase() === 'emd') { onAuth(); }
-      else { setErr(true); setPw(''); }
+      if (pw.trim().toLowerCase() === DASH_PASSWORD) { onAuth(); }
+      else { setErr('Incorrect password'); setPw(''); }
     };
+
+    const field = isErr => ({ width:'100%', padding:'11px 14px', borderRadius:8, border:`1.5px solid ${isErr?'#DC2626':C.border}`, fontSize:14, color:C.navy, outline:'none', boxSizing:'border-box', marginBottom:10 });
+
     return (
       <div style={{ minHeight:'100vh', background:C.navy, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
         <div style={{ background:C.white, borderRadius:16, padding:'40px 36px', width:320, boxShadow:'0 8px 40px rgba(0,0,0,.25)', textAlign:'center' }}>
@@ -1101,13 +1110,14 @@
           <input
             type="password"
             value={pw}
-            onChange={e=>{ setPw(e.target.value); setErr(false); }}
+            onChange={e=>{ setPw(e.target.value); setErr(''); }}
             onKeyDown={e=>e.key==='Enter'&&submit()}
             placeholder="Password"
             autoFocus
-            style={{ width:'100%', padding:'11px 14px', borderRadius:8, border:`1.5px solid ${err?'#DC2626':C.border}`, fontSize:14, color:C.navy, outline:'none', boxSizing:'border-box', marginBottom:8 }}
+            autoComplete="current-password"
+            style={field(err)}
           />
-          {err && <div style={{ fontSize:12, color:'#DC2626', marginBottom:8 }}>Incorrect password</div>}
+          {err && <div style={{ fontSize:12, color:'#DC2626', marginBottom:8 }}>{err}</div>}
           <button onClick={submit} style={{ width:'100%', padding:'11px', borderRadius:8, border:'none', background:C.orange, color:'white', fontSize:14, fontWeight:700, cursor:'pointer', marginTop:4 }}>
             Sign In
           </button>
@@ -1117,10 +1127,13 @@
   }
 
   function Root() {
+    // sessionStorage (not localStorage) so closing the browser signs the admin
+    // out — a shared booth laptop shouldn't stay unlocked indefinitely.
     const [authed, setAuthed] = useState(sessionStorage.getItem('dash_auth') === '1');
     const auth = () => { sessionStorage.setItem('dash_auth','1'); setAuthed(true); };
+    const signOut = () => { sessionStorage.removeItem('dash_auth'); setAuthed(false); };
     if (!authed) return <LoginGate onAuth={auth} />;
-    return <App />;
+    return <App onSignOut={signOut} />;
   }
 
   function mountApp() {

@@ -104,6 +104,39 @@
 
   const COUNTRIES = ['Thailand','Myanmar','Cambodia','Vietnam','Malaysia','Indonesia','Singapore','Philippines','Other'];
 
+  /* ── Registration ID ──
+     The old scheme was a random 5-digit number: only 90,000 possible values and
+     no uniqueness check, so by the birthday paradox roughly a third of events
+     with 300 registrations would hand two visitors the same ID.
+
+     Instead: 8 random characters over Crockford's base32 alphabet, which omits
+     I, L, O and U precisely so nothing looks like 0 or 1 when read off a screen
+     or written down. That is 32^8 ≈ 1.1e12 combinations, putting the chance of
+     a collision at 300 registrations around 4e-8.
+
+     Deliberately all-random rather than time-prefixed: a time prefix is
+     identical for everyone registering in the same second, which would leave
+     only the random suffix doing the work and make same-second collisions far
+     more likely. Ordering is already available from registrationDate, which is
+     what the dashboard sorts on. Generated locally, so an unreliable booth
+     connection can never block handing the visitor their ID. */
+  const ID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford base32, 32 chars
+
+  function makeRegistrationId() {
+    const n = 8;
+    let out = '';
+    const c = window.crypto || window.msCrypto;
+    if (c && c.getRandomValues) {
+      const buf = new Uint8Array(n);
+      c.getRandomValues(buf);
+      // 32 divides 256 exactly, so this modulo is unbiased.
+      for (let i = 0; i < n; i++) out += ID_ALPHABET[buf[i] % 32];
+    } else {
+      for (let i = 0; i < n; i++) out += ID_ALPHABET[Math.floor(Math.random() * 32)];
+    }
+    return 'EMD-' + out;
+  }
+
   const LANG = {
     th: {
       loading: 'กำลังโหลด…',
@@ -497,7 +530,7 @@
     const handleNext = async () => {
       if (!validate()) return;
       if (step < 4) { setStep(s => s + 1); return; }
-      const id = 'EMD-' + (10000 + Math.floor(Math.random() * 90000));
+      const id = makeRegistrationId();
       const p = { ...d, businessType: d.biz, id, eventId: activeEvent, registrationDate: new Date().toISOString(), status: 'confirmed' };
       try { await participantsCol.add(p); } catch(_) {}
       setRegId(id);

@@ -388,8 +388,13 @@
     const qrObj = useRef(null);
     const EVENT = EVENT_CONFIG[activeEvent] || EVENT_CONFIG[DEFAULT_EVENT];
 
+    // Carry the event id in the QR. The form prefers whatever Firestore reports,
+    // but on venue wifi that lookup can stall or be blocked — and then this
+    // parameter is what stops the visitor being shown, and filed under, the
+    // wrong event.
     const regUrl = (() => {
       const base = new URL('Registration%20Form.html', window.location.href);
+      if (activeEvent) base.searchParams.set('event', activeEvent);
       return base.href;
     })();
 

@@ -73,7 +73,18 @@
     'event-3': { label:'Event 3', name:'Event 3', short:'Event 3', date:'TBD', venue:'TBD' },
     'event-4': { label:'Event 4', name:'Event 4', short:'Event 4', date:'TBD', venue:'TBD' },
   };
-  const DEFAULT_EVENT = 'emd-2026';
+  /* Which event to assume when Firestore cannot be reached.
+     Visitors arrive by scanning a QR code on venue wifi, so "cannot reach
+     Firestore" is a realistic case — and guessing wrong is expensive: the
+     visitor sees another event's name, date and venue, and their registration
+     is filed under that event's id, where it never shows up in the dashboard
+     tab the staff are watching.
+     So prefer the event id carried in the QR's ?event= parameter, and keep
+     DEFAULT_EVENT pointed at the event currently being run. Firestore still
+     wins whenever it does respond, so switching events live keeps working. */
+  const DEFAULT_EVENT = 'event-2';
+  const urlEvent = new URLSearchParams(location.search).get('event');
+  const FALLBACK_EVENT = EVENT_CONFIG[urlEvent] ? urlEvent : DEFAULT_EVENT;
   const participantsCol = db.collection('participants');
 
   const C = {
@@ -176,6 +187,10 @@
       registerAnother: 'ลงทะเบียนอีกคน',
       closePage: 'ปิดหน้านี้',
       closeManual: 'กรุณาปิด tab นี้ด้วยตัวเอง',
+      saveFailTitle: 'ส่งข้อมูลไม่สำเร็จ',
+      saveFailBody: 'ยังไม่ได้บันทึกข้อมูลของคุณ เนื่องจากเชื่อมต่ออินเทอร์เน็ตไม่ได้ กรุณาตรวจสอบสัญญาณแล้วลองอีกครั้ง',
+      retry: 'ลองอีกครั้ง',
+      submitting: 'กำลังส่ง…',
     },
     en: {
       loading: 'Loading…',
@@ -215,6 +230,10 @@
       registerAnother: 'Register Another Person',
       closePage: 'Close',
       closeManual: 'Please close this tab manually',
+      saveFailTitle: 'Could not submit',
+      saveFailBody: 'Your registration was not saved because the connection failed. Please check your signal and try again.',
+      retry: 'Try Again',
+      submitting: 'Submitting…',
     },
   };
 
@@ -494,17 +513,19 @@
     const [err, setErr] = useState({});
     const [submitted, setSubmitted] = useState(false);
     const [regId, setRegId] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [saveFailed, setSaveFailed] = useState(false);
     const [activeEvent, setActiveEvent] = useState(undefined);
     const [lang, setLang] = useState('th');
     const t = LANG[lang];
 
     useEffect(() => {
-      const fallback = setTimeout(() => setActiveEvent(DEFAULT_EVENT), 3000);
+      const fallback = setTimeout(() => setActiveEvent(FALLBACK_EVENT), 3000);
       const unsub = db.collection('participants').doc('_eventControl').onSnapshot(doc => {
         clearTimeout(fallback);
         const a = doc.exists ? doc.data().activeEvent : null;
-        setActiveEvent(EVENT_CONFIG[a] ? a : DEFAULT_EVENT);
-      }, () => { clearTimeout(fallback); setActiveEvent(DEFAULT_EVENT); });
+        setActiveEvent(EVENT_CONFIG[a] ? a : FALLBACK_EVENT);
+      }, () => { clearTimeout(fallback); setActiveEvent(FALLBACK_EVENT); });
       return () => { unsub(); clearTimeout(fallback); };
     }, []);
 
@@ -530,9 +551,22 @@
     const handleNext = async () => {
       if (!validate()) return;
       if (step < 4) { setStep(s => s + 1); return; }
+      if (saving) return;
+      // Only claim success once Firestore has actually accepted the write.
+      // Swallowing the error here would hand the visitor an ID and send them
+      // away believing they had registered, while the record was never saved.
+      setSaving(true);
+      setSaveFailed(false);
       const id = makeRegistrationId();
       const p = { ...d, businessType: d.biz, id, eventId: activeEvent, registrationDate: new Date().toISOString(), status: 'confirmed' };
-      try { await participantsCol.add(p); } catch(_) {}
+      try {
+        await participantsCol.add(p);
+      } catch (_) {
+        setSaving(false);
+        setSaveFailed(true);
+        return;
+      }
+      setSaving(false);
       setRegId(id);
       setSubmitted(true);
     };
@@ -614,16 +648,25 @@
               {step === 3 && <Step3 d={d} set={setD} t={t} lang={lang} />}
               {step === 4 && <Step4 d={d} event={EVENT} t={t} lang={lang} />}
             </div>
+            {saveFailed && (
+              <div style={{ marginTop:20, background:'#FEF2F2', border:`1.5px solid ${C.danger}`, borderRadius:10, padding:'14px 16px', display:'flex', gap:12, alignItems:'flex-start' }}>
+                <span style={{ fontSize:20, lineHeight:1.1, flexShrink:0 }}>⚠️</span>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:700, color:C.danger, marginBottom:3 }}>{t.saveFailTitle}</div>
+                  <div style={{ fontSize:13, color:C.navy, lineHeight:1.6 }}>{t.saveFailBody}</div>
+                </div>
+              </div>
+            )}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:28, paddingTop:20, borderTop:`1px solid ${C.border}` }}>
-              <button onClick={()=>{setStep(s=>s-1); setErr({});}}
-                disabled={step===1}
+              <button onClick={()=>{setStep(s=>s-1); setErr({}); setSaveFailed(false);}}
+                disabled={step===1 || saving}
                 style={{ padding:'10px 22px', borderRadius:8, border:`2px solid ${step===1?C.border:C.navy}`, background:'transparent', color:step===1?C.border:C.navy, fontWeight:600, fontSize:14, cursor:step===1?'default':'pointer', transition:'all .18s' }}>
                 {t.back}
               </button>
               <div style={{ fontSize:12, color:C.muted }}>{t.stepOf(step)}</div>
-              <button onClick={handleNext}
-                style={{ padding:'10px 28px', borderRadius:8, border:'none', background:C.orange, color:'white', fontWeight:700, fontSize:14, boxShadow:`0 2px 12px ${C.orange}55`, transition:'opacity .18s' }}>
-                {step === 4 ? t.submit : t.next}
+              <button onClick={handleNext} disabled={saving}
+                style={{ padding:'10px 28px', borderRadius:8, border:'none', background:C.orange, color:'white', fontWeight:700, fontSize:14, boxShadow:`0 2px 12px ${C.orange}55`, opacity:saving?.7:1, cursor:saving?'default':'pointer', transition:'opacity .18s' }}>
+                {saving ? t.submitting : step === 4 ? (saveFailed ? t.retry : t.submit) : t.next}
               </button>
             </div>
           </div>
